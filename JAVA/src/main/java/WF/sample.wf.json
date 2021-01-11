@@ -1,0 +1,53 @@
+{
+    "name":"root",
+    "nodes":[
+        {
+            "name":"create",
+            "description":"新建单据"
+        },{
+            "name":"assign",
+            "description": "指派单据"
+        },
+        {
+            "name":"manufact",
+            "description":"制作单据"
+        },{
+            "name": "audit",
+            "description":"审核单据"
+        },{
+            "name": "review",
+            "description":"审批单据"
+        }
+    ],
+    "associations":[
+        {
+            "from":"create",
+            "to":"assign",
+            "name":"提交"
+        },{
+            "from":"assign",
+            "to":"manufact",
+            "name":"指派"
+        },{
+            "from":"manufact",
+            "to":"audit",
+            "name":"提交审批"
+        },{
+            "from":"manufact",
+            "to":"assign",
+            "name":"退回单据"
+        },{
+            "from":"audit",
+            "to":"manufact",
+            "name":"驳回"
+        },{
+            "from":"audit",
+            "to":"review",
+            "name":"批准"
+        },{
+            "from":"audit",
+            "to":"audit",
+            "name":"更多审批"
+        }
+    ]
+}

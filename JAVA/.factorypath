@@ -1,0 +1,5 @@
+<factorypath>
+    <factorypathentry kind="VARJAR" id="M2_REPO/mysql/mysql-connector-java/5.0.8/mysql-connector-java-5.0.8.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="VARJAR" id="M2_REPO/org/projectlombok/lombok/1.18.10/lombok-1.18.10.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="VARJAR" id="M2_REPO/com/alibaba/fastjson/1.2.46/fastjson-1.2.46.jar" enabled="true" runInBatchMode="false"/>
+</factorypath>
