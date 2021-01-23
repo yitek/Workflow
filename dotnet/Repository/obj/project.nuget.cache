@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "qJnqsbzQ2Eku2hpvMnnUb3g1lTvrpMVoipT9dq5q8Mo6jQaKs4s2TfhC99z1fUm/4BvFsfei5U6wxd6T3hzwug==",
+  "success": true,
+  "projectFilePath": "D:\\Yitek\\Workflow\\dotnet\\Repository\\Flow.Repository.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\YIY\\.nuget\\packages\\newtonsoft.json\\12.0.3\\newtonsoft.json.12.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,4 @@
+D:\Yitek\Workflow\dotnet\Core\bin\Debug\netcoreapp3.1\Flow.Core.exe
+D:\Yitek\Workflow\dotnet\Core\obj\Debug\netcoreapp3.1\Flow.Core.csprojAssemblyReference.cache
+D:\Yitek\Workflow\dotnet\Core\obj\Debug\netcoreapp3.1\Flow.Core.AssemblyInfoInputs.cache
+D:\Yitek\Workflow\dotnet\Core\obj\Debug\netcoreapp3.1\Flow.Core.AssemblyInfo.cs

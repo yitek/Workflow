@@ -5,5 +5,7 @@ import lombok.*;
 public class Association extends Element{
     String from;
     String to;
+    String key;
+    String value;
 }
 

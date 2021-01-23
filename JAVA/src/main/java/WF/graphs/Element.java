@@ -6,6 +6,5 @@ import lombok.*;
 public class Element{
     String name;
     Map<String,String> variables;
-    List<String> inParameters;
-    List<String> outParameters;
+    String typename;
 }
