@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "9gerJQOQL7IT3fgKz9YGWoBWq/YfT/K61m98mNVchH48snjNsIYQk0wLvdgqjjpxBTzyfI6Jm+qymDHHjCnEaA==",
+  "success": true,
+  "projectFilePath": "D:\\Yitek\\Workflow\\dotnet\\Repository\\Sqlite\\Flow.SqliteRepository\\Flow.SqliteRepository.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\YIY\\.nuget\\packages\\newtonsoft.json\\12.0.3\\newtonsoft.json.12.0.3.nupkg.sha512",
+    "C:\\Users\\YIY\\.nuget\\packages\\stub.system.data.sqlite.core.netstandard\\1.0.113.2\\stub.system.data.sqlite.core.netstandard.1.0.113.2.nupkg.sha512",
+    "C:\\Users\\YIY\\.nuget\\packages\\system.data.sqlite.core\\1.0.113.7\\system.data.sqlite.core.1.0.113.7.nupkg.sha512"
+  ],
+  "logs": []
+}

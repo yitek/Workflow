@@ -1,0 +1,15 @@
+D:\Yitek\Workflow\dotnet\WFlow.Core\bin\Debug\netcoreapp3.1\WFlow.Core.exe
+D:\Yitek\Workflow\dotnet\WFlow.Core\obj\Debug\netcoreapp3.1\WFlow.Core.csprojAssemblyReference.cache
+D:\Yitek\Workflow\dotnet\WFlow.Core\obj\Debug\netcoreapp3.1\WFlow.Core.AssemblyInfoInputs.cache
+D:\Yitek\Workflow\dotnet\WFlow.Core\obj\Debug\netcoreapp3.1\WFlow.Core.AssemblyInfo.cs
+D:\Yitek\Workflow\dotnet\WFlow.Core\obj\Debug\netcoreapp3.1\WFlow.Core.csproj.CoreCompileInputs.cache
+D:\Yitek\Workflow\dotnet\WFlow.Core\bin\Debug\netcoreapp3.1\WFlow.Core.deps.json
+D:\Yitek\Workflow\dotnet\WFlow.Core\bin\Debug\netcoreapp3.1\WFlow.Core.runtimeconfig.json
+D:\Yitek\Workflow\dotnet\WFlow.Core\bin\Debug\netcoreapp3.1\WFlow.Core.runtimeconfig.dev.json
+D:\Yitek\Workflow\dotnet\WFlow.Core\bin\Debug\netcoreapp3.1\WFlow.Core.dll
+D:\Yitek\Workflow\dotnet\WFlow.Core\bin\Debug\netcoreapp3.1\WFlow.Core.pdb
+D:\Yitek\Workflow\dotnet\WFlow.Core\bin\Debug\netcoreapp3.1\Newtonsoft.Json.dll
+D:\Yitek\Workflow\dotnet\WFlow.Core\obj\Debug\netcoreapp3.1\WFlow.Core.csproj.CopyComplete
+D:\Yitek\Workflow\dotnet\WFlow.Core\obj\Debug\netcoreapp3.1\WFlow.Core.dll
+D:\Yitek\Workflow\dotnet\WFlow.Core\obj\Debug\netcoreapp3.1\WFlow.Core.pdb
+D:\Yitek\Workflow\dotnet\WFlow.Core\obj\Debug\netcoreapp3.1\WFlow.Core.genruntimeconfig.cache

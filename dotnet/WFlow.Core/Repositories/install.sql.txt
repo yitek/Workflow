@@ -1,0 +1,50 @@
+﻿DROP TABLE IF EXISTS `wf_activities`;
+CREATE TABLE wf_activities 
+(
+	id CHAR(40) PRIMARY KEY,
+    parentId CHAR(40) NULL INDEX,
+    flowId CHAR(40) NOT NULL INDEX,
+    domain VARCHAR(80) NOT NULL INDEX,
+    nodeName VARCHAR(40) NOT NULL,
+    nodePath VARCHAR(200) NOT NULL,
+    version VARCHAR(40) NOT NULL,
+    hasChildren int NOT NULL,
+    actionType VARCHAR(120) NULL,
+    status INT NOT NULL,
+    ownerId VARCHAR(80) NOT NULL,
+    ownerName VARCHAR(80) NOT NULL,
+    states TEXT NULL,
+    nexts VARCHAR(MAX) NULL,
+    graph TEXT NOT NULL,
+    createTime DATETIME NOT NULL,
+    creatorId VARCHAR(80) NOT NULL,
+    creatorName VARCHAR(80) NOT NULL,
+    dealTime DATETIME NULL,
+    dealerId VARCHAR(80) NULL INDEX,
+    dealerName VARCHAR(80) NULL,
+    doneTime DATETIME NULL,
+    closeTime DATETIME NULL,
+    closerId VARCHAR(80) NULL,
+    closerName VARCHAR(80) NULL,
+    results TEXT NULL,
+    inputs TEXT NULL,
+)
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8;
+
+INSERT INTO wf_navigations(
+    fromActivityId  CHAR(40) NOT NULL INDEX,
+    toActivityId CHAR(40) NOT NULL INDEX,
+    parentActivityId CHAR(40) NOT NULL INDEX,
+    flowId CHAR(40) NOT NULL INDEX,
+    name VARCHAR(80)  NOT NULL,
+    navigatorType VARCHAR(120)  NULL,
+    createTime DATETIME NOT NULL,
+    nextDealerId VARCHAR(80)  NULL,
+    nextDealerName VARCHAR(80) NULL,
+    nextInputs TEXT NULL,
+    prevResults TEXT NULL,
+    graph VARCHAR(800) NOT NULL,
+)
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8;

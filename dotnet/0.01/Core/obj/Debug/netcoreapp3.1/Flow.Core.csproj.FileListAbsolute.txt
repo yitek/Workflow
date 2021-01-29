@@ -1,0 +1,9 @@
+D:\Yitek\Workflow\dotnet\Core\obj\Debug\netcoreapp3.1\Flow.Core.AssemblyInfoInputs.cache
+D:\Yitek\Workflow\dotnet\Core\obj\Debug\netcoreapp3.1\Flow.Core.AssemblyInfo.cs
+D:\Yitek\Workflow\dotnet\Core\obj\Debug\netcoreapp3.1\Flow.Core.csproj.CoreCompileInputs.cache
+D:\Yitek\Workflow\dotnet\Core\bin\Debug\netcoreapp3.1\Flow.Core.deps.json
+D:\Yitek\Workflow\dotnet\Core\bin\Debug\netcoreapp3.1\Flow.Core.dll
+D:\Yitek\Workflow\dotnet\Core\bin\Debug\netcoreapp3.1\Flow.Core.pdb
+D:\Yitek\Workflow\dotnet\Core\obj\Debug\netcoreapp3.1\Flow.Core.dll
+D:\Yitek\Workflow\dotnet\Core\obj\Debug\netcoreapp3.1\Flow.Core.pdb
+D:\Yitek\Workflow\dotnet\Core\obj\Debug\netcoreapp3.1\Flow.Core.csprojAssemblyReference.cache
