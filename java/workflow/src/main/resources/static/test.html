@@ -1,0 +1,125 @@
+<html>
+ <head>
+   <meta charset="UTF-8">
+   <script src="js/jquery.js"></script>
+   <style type="text/css">
+.form [name='url']{
+	min-width:400px;
+}
+
+.form div.form-field>label:first-child{
+	display:block;
+}
+.form div.form-field>textarea{
+	width:100%;
+	min-height:200px;
+}
+.form div.form-field.url>label:first-child{
+	display: inline;
+}
+.ajax{
+	display: flex;
+	width:100%;
+	flex-flow: row nowrap;
+}
+.ajax>fieldset.request{
+	width:60%;
+	min-width:200px;
+}
+.ajax>fieldset.response{
+	width:40%;
+	min-width:200px;
+}
+   </style>
+ </head>
+ <body> 
+	 <div class='form'>
+		<div class='form-field url'>
+			<label>url</label>
+			<select name='method'>
+				<option value="GET">GET</option>
+				<option value="POST">POST</option>
+			</select>
+			<input type="text" name="url"/>
+			<button id='submit'>Go</button>
+		</div>
+		<div class='ajax'>
+			<fieldset class='request'>
+				<legend>Request</legend>
+				<div class='form-field'>
+					<label>headers</label>
+					<textarea name="requestHeaders"></textarea>
+				</div>
+				<div class='form-field'>
+					<label>body</label>
+					<textarea name="requestBody"></textarea>
+				</div>
+				
+			</fieldset>
+			 <fieldset class='response'>
+				 <legend>Response</legend>
+				<div class='form-field'>
+					<label>body</label>
+					<textarea name="responseBody"></textarea>
+				</div>
+			 </fieldset>
+		</div>
+		 
+		 
+	 </div>
+	
+	<script>
+var optsText = localStorage.getItem("ajaxOpts");
+if(optsText){
+	console.log(optsText)
+	let opts = JSON.parse(optsText);
+	for(let n in opts){
+		if(n==='headers'){
+			let text = "";
+			let headers = opts[n];
+			for(let k in headers){
+				text += `${k}: ${headers[k]}\n`
+			}
+			$(".form textarea[name='requestHeaders']").val(text);
+		}else if(n==='data'){
+			$(".form textarea[name='requestBody']").val(opts[n]);
+		}else{
+			let selector = `.form [name='${n}']`;
+			$(selector).val(opts[n]);
+		}
+	}
+}
+
+$("#submit").click(()=>{
+	let headerText = $(".form textarea[name='requestHeaders']").val();
+	let headers = {};
+	if(headerText){
+		let pairs = headerText.split('\n');
+		for(let pair of pairs){
+			let kv = pair.split(':');
+			if(kv.length === 2)headers[$.trim(kv[0])] = $.trim(kv[1])
+		}
+		
+	}
+	let method = $(".form select[name='method']").val();
+	let url = $(".form input[name='url']").val();
+	let content = $(".form textarea[name='requestBody']").val();
+	let opts = {
+		type:method,
+		url:url,
+		headers: headers,
+		data: content,
+		success(ret){
+			if(typeof ret!=='string') ret = JSON.stringify(ret,null,'\t');
+			$(".form textarea[name='responseBody']").val(ret).css("border",'1px solid green');
+		},
+		error(err){
+			$(".form textarea[name='responseBody']").val(JSON.stringify(err)).css("border",'1px solid red');
+		}
+	}
+	localStorage.setItem("ajaxOpts",JSON.stringify(opts))
+	$.ajax(opts)
+})
+	</script>
+ </body>
+</html>

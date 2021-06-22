@@ -1,0 +1,46 @@
+{
+	"name":"order",
+	"start":"create",
+	"variables":{"author":"yiy"},
+	"states":{
+		"新建预约单":{
+			"imports":{"author":"author"},
+			"transitions":{
+				"submitted":{
+					"name":"提交",
+					"predicate":["action","submit"]
+				}
+			}
+		},
+		"审批预约单":{
+			"exports":{"author":"author"},
+			"transitions":{
+				"approved":{
+					"name":"批准",
+					"predicate":["action","approve"]
+				}
+				,"created":{
+					"name":"驳回",
+					"predicate":["action","reject"]
+				}
+				,"submitted":{
+					"name":"更多审批",
+					"predicate":["action","more"]
+				}
+			}
+		}
+		,"审阅预约单":{
+			"transitions":{
+				"permitted":{
+					"name":"同意",
+					"predicate":["action","permit"]
+				}
+				,"created":{
+					"name":"拒绝",
+					"predicate":["action","reject"]
+				}
+			}
+		}
+	}
+
+}
