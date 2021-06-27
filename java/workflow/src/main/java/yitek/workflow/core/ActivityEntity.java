@@ -1,94 +1,174 @@
 package yitek.workflow.core;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
-public class ActivityEntity {
-	UUID id;
-	public UUID getId() {return this.id;}
-	public ActivityEntity setId(UUID value){ this.id = value;return this;}
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 
-	UUID fromActivityId;
-	public UUID getfromActivityId() {return this.fromActivityId;}
-	public ActivityEntity setfromActivityId(UUID value){ this.fromActivityId = value;return this;}
+import yitek.workflow.core.std.*;
 
-	UUID parentId;
-	public UUID getParentId() {return this.parentId;}
-	public ActivityEntity setParentId(UUID value){ this.parentId = value;return this;}
+public class ActivityEntity  {
+	public ActivityEntity(){}
+	private ActivityEntity(String name,Dealer dealer){
+		this._id = UUID.randomUUID();
+		this._status = ActivityStates.created;
+		this._name = name;
+		this._creatorId = dealer.id();
+		this._creatorName = dealer.name();
+		this._createTime = new Date();
+	}
+	// flow的创建
+	public ActivityEntity(String name,String version, JSONObject diagramState,Dealer dealer){
+		this(name,dealer);
+		this._flowId = this._superId =  this._id;
+		this._pathname = this._name;
+		this._version = version;
+		this._state = JSON.toJSONString(diagramState);
+	}
+	// start的创建
+	public ActivityEntity(String name,JSONObject state,Dealer dealer,ActivityEntity superEntity){
+		this(name,dealer);
+		this._pathname = superEntity._pathname + "." + name;
+		this.state(JSON.toJSONString(state));
+		this._superId = superEntity._id;
+		this._flowId = superEntity._flowId;
+		this._version = superEntity._version;
+	}
+	// 下一步
+	public ActivityEntity(Dealer dealer,Transition transition,ActivityEntity from){
+		this(transition.to().name(),dealer);
+		this._pathname = from._pathname + "." + this._name;
+		this.state(transition.to().jsonString());
+		this._transitionName = transition.name();
+		this._fromId = from._id;
+		this._superId = from._superId;
+		this._flowId = from._flowId;
+		this._version = from._version;
+	}
 
-	UUID flowId;
-	public UUID getFlowId() {return this.flowId;}
-	public ActivityEntity setFlowId(UUID value){ this.flowId = value;return this;}
+	UUID _id;
+	public UUID id() {return this._id;}
+	public ActivityEntity id(UUID value){ this._id = value;return this;}
 
-	String name;
-	public String getName() {return this.name;}
-	public ActivityEntity setName(String value){ this.name = value;return this;}
+	UUID _fromId;
+	public UUID fromId() {return this._fromId;}
+	public ActivityEntity fromId(UUID value){ this._fromId = value;return this;}
 
-	ActivityStates status;
-	public ActivityStates getStatus() {return this.status;}
-	public ActivityEntity setStatus(ActivityStates value){ this.status = value;return this;}
+	UUID _superId;
+	public UUID superId() {return this._superId;}
+	
+	public ActivityEntity superId(UUID value){ this._superId = value;return this;}
 
-	Date createTime;
-	public Date getCreateTime() {return this.createTime;}
-	public ActivityEntity setCreateTime(Date value){ this.createTime = value;return this;}
+	UUID _flowId;
+	public UUID flowId() {return this._flowId;}
+	public ActivityEntity flowId(UUID value){ this._flowId = value;return this;}
 
-	String creatorId;
-	public String getCreatorId() {return this.creatorId;}
-	public ActivityEntity setCreatorId(String value){ this.creatorId = value;return this;}
+	String _name;
+	public String name() {return this._name;}
+	public ActivityEntity name(String value){ this._name = value;return this;}
 
-	String creatorName;
-	public String getCreatorName() {return this.creatorName;}
-	public ActivityEntity setCreatorName(String value){ this.creatorName = value;return this;}
+	String _version;
+	public String version() {return this._version;}
+	public ActivityEntity version(String value){ this._version = value;return this;}
 
-	Date dealTime;
-	public Date getDealTime() {return this.dealTime;}
-	public ActivityEntity setDealTime(Date value){ this.dealTime = value;return this;}
+	String _pathname;
+	public String pathname() {return this._pathname;}
+	public ActivityEntity pathname(String value){ this._pathname = value;return this;}
 
-	String dealerId;
-	public String getDealerId() {return this.dealerId;}
-	public ActivityEntity setDealerId(String value){ this.dealerId = value;return this;}
+	String _transitionName;
+	public String transitionName() {return this._transitionName;}
+	public ActivityEntity transitionName(String value){ this._transitionName = value;return this;}
 
-	String dealerName;
-	public String getDealerName() {return this.creatorName;}
-	public ActivityEntity setDealerName(String value){ this.creatorName = value;return this;}
-
-
-	String std;
-	public String getSTD() {return this.std;}
-	public ActivityEntity setSTD(String value){ this.std = value;return this;}
-
-	String activityType;
-	public String getActivityType() {return this.activityType;}
-	public ActivityEntity setActivityType(String value){ this.activityType = value;return this;}
+	String _actionType;
+	public String actionType() {return this._actionType;}
+	public ActivityEntity actionType(String value){ this._actionType = value;return this;}
 
 	
 
+	ActivityStates _status;
+	public ActivityStates status() {return this._status;}
+	public ActivityEntity status(ActivityStates value){ this._status = value;return this;}
+
+	Date _createTime;
+	public Date createTime() {return this._createTime;}
+	public ActivityEntity createTime(Date value){ this._createTime = value;return this;}
+
+	String _creatorId;
+	public String creatorId() {return this._creatorId;}
+	public ActivityEntity creatorId(String value){ this._creatorId = value;return this;}
+
+	String _creatorName;
+	public String creatorName() {return this._creatorName;}
+	public ActivityEntity creatorName(String value){ this._creatorName = value;return this;}
+
+	Date _dealTime;
+	public Date dealTime() {return this._dealTime;}
+	public ActivityEntity dealTime(Date value){ this._dealTime = value;return this;}
+
+	String _dealerId;
+	public String dealerId() {return this._dealerId;}
+	public ActivityEntity dealerId(String value){ this._dealerId = value;return this;}
+
+	String _dealerName;
+	public String dealerName() {return this._dealerName;}
+	public ActivityEntity dealerName(String value){ this._dealerName = value;return this;}
+
+	Date _doneTime;
+	public Date doneTime() {return this._doneTime;}
+	public ActivityEntity doneTime(Date value){ this._dealTime = value;return this;}
 
 
-	String inputs;
-	public String getInputs() {return this.inputs;}
-	public ActivityEntity setInputs(String value){ this.inputs = value;return this;}	
 
-	String params;
-	public String getParams() {return this.params;}
-	public ActivityEntity setParams(String value){ this.params = value;return this;}
+	String _state;
+	public String state() {return this._state;}
+	public ActivityEntity state(String value){ this._state = value;return this;}
 
-	String imports;
-	public String geImports() {return this.imports;}
-	public ActivityEntity setImports(String value){ this.imports = value;return this;}
+	String _activityType;
+	public String activityType() {return this._activityType;}
+	public ActivityEntity activityType(String value){ this._activityType = value;return this;}
 
-	String exports;
-	public String getExports() {return this.exports;}
-	public ActivityEntity setExports(String value){ this.exports = value;return this;}
+	String _params;
+	public String params() {return this._params;}
+	public ActivityEntity params(String value){ this._params = value;return this;}
 
-	String variables;
-	public String getVariables() {return this.variables;}
-	public ActivityEntity setVariables(String value){ this.variables = value;return this;}
+	
+	String _variables;
+	public String variables() {return this._variables;}
+	public ActivityEntity variables(String value){ this._variables = value;return this;}
 
-	String results;
-	public String getResults() {return this.results;}
-	public ActivityEntity setResults(String value){ this.results = value;return this;}
+	String _results;
+	public String results() {return this._results;}
+	public ActivityEntity results(String value){ this._results = value;return this;}
 
-	List<ActivityEntity> subsidaries;
-	public List<ActivityEntity> getSubsidaries() {return this.subsidaries;}
-	public ActivityEntity setSubsidaries(List<ActivityEntity> value){ this.subsidaries = value;return this;}
+	String _billId;
+	public String billId() {return this._billId;}
+	public ActivityEntity billId(String value){ this._billId = value;return this;}
+
+	String _businessId;
+	public String businessId() {return this._businessId;}
+	public ActivityEntity businessId(String value){ this._businessId = value;return this;}
+	String _taskId;
+	public String taskId() {return this._taskId;}
+	public ActivityEntity taskId(String value){ this._taskId = value;return this;}
+
+
+	
+	List<ActivityEntity> _subsidaries;
+	public List<ActivityEntity> getSubsidaries() {return this._subsidaries;}
+	public ActivityEntity subsidaries(List<ActivityEntity> value){ this._subsidaries = value;return this;}
+
+	public static UUID Bytes2UUID(byte[] bytes) {
+		ByteBuffer bb = ByteBuffer.wrap(bytes);
+		long firstLong = bb.getLong();
+		long secondLong = bb.getLong();
+		return new UUID(firstLong, secondLong);
+	  }
+	
+	  public static byte[] UUID2Bytes(UUID uuid) {
+		ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+		bb.putLong(uuid.getMostSignificantBits());
+		bb.putLong(uuid.getLeastSignificantBits());
+		return bb.array();
+	  }
 }

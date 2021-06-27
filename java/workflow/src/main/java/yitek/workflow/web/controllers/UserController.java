@@ -15,8 +15,9 @@ public class UserController {
  
 	@GetMapping("/list/all")
 	public List<User> listAll() throws Exception{
-		FlowEngine flow = new FlowEngine();
-		flow.startFlow("test", null,null,null);
+		LocalFlowEngine flow = new LocalFlowEngine();
+		Dealer dealer = new Dealer("1","yiy");
+		flow.startFlow("test",null,dealer,null,null);
 		List<User> users = new ArrayList<User>();
 		User user = new User();
 		user.setId("1");user.setName("hello");

@@ -6,23 +6,23 @@ import java.nio.file.*;
 import com.alibaba.fastjson.*;
 
 
-public class FileSTDRepository implements STDRepository {
+public class FileDiagramRepository implements DiagramRepository {
 	String baseDir;
-	public FileSTDRepository(){
+	public FileDiagramRepository(){
 		this(null);
 	}
-	public FileSTDRepository(String basDir){
+	public FileDiagramRepository(String basDir){
 		if(basDir==null || "".equals(basDir)){
 			basDir = System.getProperty("user.dir") + "/wf-defs/";
 		}
 		this.baseDir = basDir;
 	}
-	public State GetStateByName(String name) 
+	public Diagram getDiagramByName(String name) 
 	throws FileNotFoundException,UnsupportedEncodingException,IOException,SecurityException
 	{
-		 return this.GetStateByName(name,null);
+		 return this.getDiagramByName(name,null);
 	}
-	public State GetStateByName(String name,String version) 
+	public Diagram getDiagramByName(String name,String version) 
 	throws FileNotFoundException,UnsupportedEncodingException,IOException,SecurityException
 	{
 		String defFile = Paths.get(baseDir, name).toString();
@@ -45,7 +45,6 @@ public class FileSTDRepository implements STDRepository {
                 reader.close();
             }
         }
-
-        return new State(null,JSON.parseObject(readJson));
+		return new Diagram(JSON.parseObject(readJson),null);
 	}	
 }
