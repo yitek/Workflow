@@ -24,7 +24,7 @@ public class Predicate {
 		this._op = PredicateOperations.constant;
 		this._value = value==null||value.equals("<FALSE>")?"":value;
 	}
-	public Predicate(JSON value){
+	public Predicate(Object value){
 		if(value instanceof JSONArray){
 			JSONArray opcodes = (JSONArray)value;
 			String opText = opcodes.getString(0);
@@ -40,20 +40,20 @@ public class Predicate {
 			}
 			PredicateOperations op = PredicateOperations.valueOf(opText);
 			this._op = op;
-			this._left = new Predicate((JSON)arg1);
-			this._right = new Predicate((JSON)arg2);
+			this._left = new Predicate(arg1);
+			this._right = new Predicate(arg2);
 		}else{
 			this._op = PredicateOperations.constant;
 			this._value = value==null?"":value.toString();
 		}
 	}
 
-	public String eval(Activity activity ,Activity from,TriggleContext ctx) throws Exception{
+	public String eval(Activity activity ,Activity from,FlowContext ctx) throws Exception{
 		String left = null;
 		String right =null;
 		switch(this._op){
 			case constant: return this._value;
-			case member: return activity.ResolveMemberString(this._value,from);
+			case member: return activity.ResolveMemberString(this._value,from,null);
 			case eq:
 				left = this._left.eval(activity,from,ctx);
 				right = this._right.eval(activity,from,ctx);

@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 
 import yitek.workflow.core.std.*;
 
@@ -17,26 +16,29 @@ public class ActivityEntity  {
 		this._creatorId = dealer.id();
 		this._creatorName = dealer.name();
 		this._createTime = new Date();
+		this._isStart= false;
 	}
 	// flow的创建
-	public ActivityEntity(String name,String version, JSONObject diagramState,Dealer dealer){
+	public ActivityEntity(String name,String version, Map<String,Object> diagramState,Dealer dealer){
 		this(name,dealer);
 		this._flowId = this._superId =  this._id;
 		this._pathname = this._name;
 		this._version = version;
 		this._state = JSON.toJSONString(diagramState);
+		this._isStart= false;
 	}
 	// start的创建
-	public ActivityEntity(String name,JSONObject state,Dealer dealer,ActivityEntity superEntity){
+	public ActivityEntity(String name,Map<String,Object> state,Dealer dealer,ActivityEntity superEntity){
 		this(name,dealer);
 		this._pathname = superEntity._pathname + "." + name;
 		this.state(JSON.toJSONString(state));
 		this._superId = superEntity._id;
 		this._flowId = superEntity._flowId;
 		this._version = superEntity._version;
+		this._isStart= false;
 	}
 	// 下一步
-	public ActivityEntity(Dealer dealer,Transition transition,ActivityEntity from){
+	public ActivityEntity(Dealer dealer,Transition transition,ActivityEntity from) throws Exception{
 		this(transition.to().name(),dealer);
 		this._pathname = from._pathname + "." + this._name;
 		this.state(transition.to().jsonString());
@@ -45,6 +47,10 @@ public class ActivityEntity  {
 		this._superId = from._superId;
 		this._flowId = from._flowId;
 		this._version = from._version;
+		this._businessId = from._businessId;
+		this._billId = from._billId;
+		this._taskId =from._taskId;
+		this._isStart= false;
 	}
 
 	UUID _id;
@@ -128,6 +134,10 @@ public class ActivityEntity  {
 	public String activityType() {return this._activityType;}
 	public ActivityEntity activityType(String value){ this._activityType = value;return this;}
 
+	String _inputs;
+	public String inputs() {return this._inputs;}
+	public ActivityEntity inputs(String value){ this._inputs = value;return this;}
+
 	String _params;
 	public String params() {return this._params;}
 	public ActivityEntity params(String value){ this._params = value;return this;}
@@ -152,23 +162,43 @@ public class ActivityEntity  {
 	public String taskId() {return this._taskId;}
 	public ActivityEntity taskId(String value){ this._taskId = value;return this;}
 
+	Boolean _suspended;
+	public Boolean suspended(){ return this._suspended;}
+	public ActivityEntity suspended(Boolean value){this._suspended=value;return this;}
 
-	
-	List<ActivityEntity> _subsidaries;
-	public List<ActivityEntity> getSubsidaries() {return this._subsidaries;}
-	public ActivityEntity subsidaries(List<ActivityEntity> value){ this._subsidaries = value;return this;}
+	int _subCount;
+	public Integer subCount(){return this._subCount; }
+	public ActivityEntity subCount(Integer value){this._subCount=value;return this;}
+
+	Boolean _isStart;
+	public Boolean isStart(){ return this._isStart;}
+	public ActivityEntity isStart(Boolean value){this._isStart=value;return this;}
+
+
+	List<ActivityEntity> _subordinates;
+	public List<ActivityEntity> subordinates() {return this._subordinates;}
+	public ActivityEntity subordinates(List<ActivityEntity> value){ this._subordinates = value;return this;}
 
 	public static UUID Bytes2UUID(byte[] bytes) {
+		return UUID.fromString(new String(bytes));
+	}
+
+	public static UUID Bytes2UUID1(byte[] bytes) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		long firstLong = bb.getLong();
 		long secondLong = bb.getLong();
 		return new UUID(firstLong, secondLong);
-	  }
+	}
+
+	public static byte[] UUID2Bytes(UUID uuid){
+		return uuid.toString().getBytes();
+	}
 	
-	  public static byte[] UUID2Bytes(UUID uuid) {
+	
+	public static byte[] UUID2Bytes1(UUID uuid) {
 		ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
 		bb.putLong(uuid.getMostSignificantBits());
 		bb.putLong(uuid.getLeastSignificantBits());
 		return bb.array();
-	  }
+	}
 }

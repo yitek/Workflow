@@ -26,7 +26,7 @@ public class FileDiagramRepository implements DiagramRepository {
 	throws FileNotFoundException,UnsupportedEncodingException,IOException,SecurityException
 	{
 		String defFile = Paths.get(baseDir, name).toString();
-		if(version!=null){
+		if(version!=null && !version.equals("")){
 			defFile += "-v" + version;
 		}
 		defFile += ".json";

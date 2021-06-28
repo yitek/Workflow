@@ -3,11 +3,14 @@ package yitek.workflow.core.std;
 import java.util.*;
 import com.alibaba.fastjson.*;
 
+import yitek.workflow.core.*;
+
 public class Diagram {
 	JSONObject data;
-	Diagram(){}
+	protected Diagram(){}
 	static Diagram _empty = new Diagram();
 	public static Diagram empty(){return _empty;}
+
 
 	public Diagram(JSONObject data,State superState){
 		this.data = data;
@@ -24,27 +27,35 @@ public class Diagram {
 		if(_imports==null){
 			Object value = data.get("imports");
 			Map<String,List<String>> existed = null;
-			if(this._superState!=null && this._superState._diagram!=null) existed = this._superState._diagram.imports();
+			if(this._superState!=null && this._superState._ownDiagram!=null) existed = this._superState._ownDiagram.imports();
 			this._imports = State.mergeImExport(existed, value);
+			this._imports = Collections.unmodifiableMap(this._imports);
 		}
 		return _imports;
+	}
+	public List<String> imports(String name){
+		return StringMap.resolve(this.imports(), name);
 	}
 	Map<String,List<String>> _exports;
 	public Map<String,List<String>> exports(){
 		if(_exports==null){
 			Object value = data.get("exports");
 			Map<String,List<String>> existed = null;
-			if(this._superState!=null && this._superState._diagram!=null) existed = this._superState._diagram.imports();
+			if(this._superState!=null && this._superState._ownDiagram!=null) existed = this._superState._ownDiagram.imports();
 			this._exports = State.mergeImExport(existed, value);
+			this._exports = Collections.unmodifiableMap(this._exports);
 		}
 		return _exports;
 	}
-	Map<String,Object> _variables;
-	public Map<String,Object> variables(){
+	public List<String> exports(String name){
+		return StringMap.resolve(this.exports(), name);
+	}
+	StringMap _variables;
+	public StringMap variables(){
 		if(this._variables==null){
-			Map<String,Object> vars = new HashMap<String,Object>();
-			if(this._superState!=null && this._superState._diagram!=null){
-				Map<String,Object> superVars = this._superState._diagram.variables();
+			StringMap vars = new StringMap();
+			if(this._superState!=null ){
+				Map<String,Object> superVars = this._superState.variables();
 				for(Map.Entry<String,Object> entry: superVars.entrySet()){
 					vars.put(entry.getKey(), entry.getValue());
 				}
@@ -55,30 +66,50 @@ public class Diagram {
 					vars.put(entry.getKey(), entry.getValue());
 				}
 			}
-			this._variables = Collections.unmodifiableMap(vars);
+			this._variables = vars.readonly(true);
 		}
 		return this._variables;
 	}
-	String _start;
-	public String start(){
-		if(_start==null){
-			Object value = data.get("start");
-			if(value!=null) this._start = value.toString();
-			else this._start = "";
-		}
-		return this._start;
+	public Object variables(String name){
+		return this.variables().get(name);
 	}
-	String[] _starts;
-	public String[] starts(){
+	
+	List<State> _starts;
+	public List<State> starts() throws Exception{
 		if(_starts==null){
-			Object value = data.get("starts");
-			if(value!=null){
-				this._starts = ((JSONArray)value).toArray(this._starts);
+			this._starts = new ArrayList<State>();
+			Object startNames = data.get("starts");
+			if(startNames!=null && startNames instanceof JSONArray) {
+				for(Object name : ((JSONArray)startNames)){
+					State state = this.states(name.toString());
+					if(state!=null) this._starts.add(state);
+				}
+			}else {
+				Object startName = data.get("start");
+				if(startName!=null){
+					State state = this.states(startName.toString());
+					if(state!=null) this._starts.add(state);
+				}
 			}
-			else this._starts = new String[0];
+			if(this._starts.size()==0){
+				throw new Exception("没有找到开始节点");
+			}
+			this._starts = Collections.unmodifiableList(this._starts);
 		}
 		return this._starts;
 
+	}
+	String _actionType;
+	public String actionType(){
+		if(_actionType==null){
+			_actionType = this.data.getString("actionType");
+			if(_actionType==null) {
+				if(this.superState()!=null){
+					_actionType = this.superState().actionType();
+				}else _actionType = "";
+			}
+		}
+		return this._actionType;
 	}
 
 	Map<String,State> _states;
@@ -90,21 +121,29 @@ public class Diagram {
 				
 				for(Map.Entry<String,Object> entry : ((JSONObject)value).entrySet()){
 					String name = entry.getKey();
-					this._states.put(name,new State(name,(JSONObject)entry.getValue()));
+					this._states.put(name,new State(name,(JSONObject)entry.getValue(),this));
 				}
 			}
+			this._states = Collections.unmodifiableMap(this._states);
 		}
 		return _states;
 	}
+	public State states(String name){
+		 return StringMap.resolve(this.states(), name);
+	}
 	
-	public JSONObject jsonObject(){
-		JSONObject obj = new JSONObject();
+	public StringMap jsonObject() throws Exception{
+		StringMap obj = new StringMap();
+		if(!this.actionType().equals(""))obj.put("actionType",this.actionType());
 		if(this.imports()!=null)obj.put("imports",this.imports() );
 		if(this.exports()!=null) obj.put("exports", this.exports());
-		if(this.start()!=null) obj.put("start", this.start());
-		if(this.starts()!=null) obj.put("starts",this.starts());
+		if(this.starts()!=null) {
+			List<String> startNames = new ArrayList<String>();
+			for(State state :this.starts()) startNames.add(state.name());
+			obj.put("starts", startNames);
+		}
 		if(this.states()!=null) {
-			Map<String, JSONObject> states = new HashMap<String,JSONObject>();
+			StringMap states = new StringMap();
 			for(Map.Entry<String,State> entry:this.states().entrySet()){
 				states.put(entry.getKey(), entry.getValue().jsonObject());
 			}
@@ -112,7 +151,7 @@ public class Diagram {
 		return obj;
 	}
 
-	public String jsonString(){
+	public String jsonString() throws Exception{
 		return JSON.toJSONString(this.jsonObject());
 	}
 }
