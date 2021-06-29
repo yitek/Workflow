@@ -12,23 +12,52 @@ public class StringMap implements Map<String,Object> {
 		return _empty;
 	}
 	public StringMap(){
-		this._map = new HashMap<String,Object>();
+		this._map = new HashMap<>();
+		this._readonly = false;
+	}
+	public StringMap(String json){
+		this._map = JSONObject.parseObject(json);
+		if(this._map==null) this._map = new JSONObject();
 		this._readonly = false;
 	}
 	public StringMap(Map<String,Object> data){
-		this._map = data;
-		this._readonly = false;
+		if(data instanceof StringMap){
+			this._map = ((StringMap)data)._map;
+		}else{
+			this._map = data;
+			this._readonly = false;
+		}
+		
 	}
+
 	@SuppressWarnings("unchecked")
 	public StringMap(Object obj){
 		this._readonly = false;
-		if(obj instanceof Map) this._map = (Map<String,Object>)obj;
+		if(obj==null) this._map =new HashMap<String,Object>();
+		if(obj instanceof StringMap) this._map = ((StringMap)obj)._map;
+		else if(obj instanceof Map) this._map = (Map<String,Object>)obj;
 		else {
 			Object json = JSON.toJSON(obj);
 			if(json instanceof JSONObject) this._map = (Map<String,Object>)json;
 			else
 				this._map = new HashMap<>();
 		}
+	}
+	public String getString(String key){
+		Object obj = this.get(key);
+		if(obj==null) return null;
+		if(obj instanceof String) return obj.toString();
+		if(obj instanceof  Integer) return obj.toString();
+		if(obj instanceof  Boolean) return obj.toString();
+		if(obj instanceof  Double) return obj.toString();
+		if(obj instanceof  Date) return obj.toString();
+		if(obj instanceof  UUID) return obj.toString();
+		return JSON.toJSONString(obj);
+	}
+
+	public String getString(String key,String dft){
+		String value = this.getString(key);
+		return (value==null)?dft:key;
 	}
 
 	public Set<Map.Entry<String,Object>> entrySet(){
@@ -51,14 +80,13 @@ public class StringMap implements Map<String,Object> {
 			for(Object k:this._map.keySet()){
 				if(k==null) return true;
 			}
-			return false;
 		}else {
 			for(Object k:this._map.keySet()){
 				if(k==null) continue;
 				if(k.equals(key)) return true;
 			}
-			return false;
 		}
+		return false;
 	}
 	public boolean containsValue(Object value){
 		return this._map.containsValue(value);
@@ -67,7 +95,7 @@ public class StringMap implements Map<String,Object> {
 	public Object remove(Object key){
 		return this._map.remove(key);
 	}
-	public void putAll(Map<? extends String, ? extends Object> m){
+	public void putAll(Map<? extends String, ?> m){
 		this._map.putAll(m);
 	}
 
@@ -84,22 +112,21 @@ public class StringMap implements Map<String,Object> {
 	public Object get(Object key){
 		return resolve((Object)this._map,key==null?null:key.toString());
 	}
-	public Object get(String key){
+	public Object resolve(String key){
 		if(key==null){
 			for(Map.Entry<String,Object> entry : this.entrySet()){
 				if(entry.getKey()==null) return entry.getValue();
 			}
-			return null;
 		}else{
 			if(key.indexOf(".")>0){
-				String[] names = key.split(".");
-				return (Object)resolve((Object)this._map,names);
+				String[] names = key.split("\\.");
+				return resolve(this._map,names);
 			}
 			for(Map.Entry<String,Object> entry : this.entrySet()){
 				if(entry.getKey()!=null && key.equals(entry.getKey())) return entry.getValue();
 			}
-			return null;
 		}
+		return null;
 	}
 
 	public Boolean readonly(){
@@ -115,7 +142,7 @@ public class StringMap implements Map<String,Object> {
 	@SuppressWarnings("unchecked")
 	public static Object cloneJSON(Object obj){
 		if(obj instanceof JSONArray){
-			List<Object> rs = new ArrayList<Object>();
+			List<Object> rs = new ArrayList<>();
 			for(Object item : (JSONArray)obj){
 				rs.add(cloneJSON(item));
 			}
@@ -133,7 +160,7 @@ public class StringMap implements Map<String,Object> {
 			}
 			return rs;
 		}else if(obj instanceof List){
-			List<Object> rs = new ArrayList<Object>();
+			List<Object> rs = new ArrayList<>();
 			for(Object item : ((List<Object>)obj)){
 				rs.add(cloneJSON(item));
 			}
@@ -161,16 +188,15 @@ public class StringMap implements Map<String,Object> {
 			for(Map.Entry<String,T> entry : map.entrySet()){
 				if(entry.getKey()==null) return entry.getValue();
 			}
-			return null;
 		}else {
 			for(Map.Entry<String,T> entry : map.entrySet()){
 				Object key = entry.getKey();
 				if(key==null) continue;
 				if(key.toString().equals(name)) return entry.getValue();
 			}
-			return null;
 		}
-		
+		return null;
+
 	}
 	
 	public static Object resolve(Object map,String[] pathnames,int start){

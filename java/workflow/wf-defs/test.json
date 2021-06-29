@@ -1,60 +1,68 @@
 {
-	"name":"order",
-	"start":"新建预约单",
-	"actionType":"billStatusAction",
-	"variables":{"author":"yiy","billService":"bookRepository"},
-	"imports": {
+	"@name":"order",
+	"@start":"审批预约单",
+	"@actionName":"billStatusAction",
+	"@variables":{"author":"yiy","billService":"bookRepository"},
+	"@imports": {
 		"prevDealer": "./dealer",
 		"creator": "./creator"
 	},
-	"states":{
+	"@states":{
 		"新建预约单":{
-			"imports":{"author":"../author"},
-			"variables":{"pageRoute":"/book-bill/create"},
-			"transitions":{
+			"@imports":{"author":"../author"},
+			"!pageRoute":"/book-bill/create",
+			"!billStatus":"draft",
+			"@transitions":{
 				"审批预约单":{
-					"name":"提交",
+					"@name":"提交",
 					"triggleUrl":"/task/submit?action=submit",
-					"predicate":["action","submit"]
+					"@predicate":["./action","submit"]
 				}
 			}
 		},
 		"审批预约单":{
-			"variables":{"pageRoute":"/book-bill/approve"},
-			"transitions":{
+			"!pageRoute":"/book-bill/approve",
+			"!billStatus":"committed",
+			"@transitions":{
 				"审阅预约单":{
-					"name":"批准",
+					"@name":"批准",
+					"@predicate":["./action","approve"],
 					"triggleUrl":"/task/submit?action=approve",
-					"predicate":["action","approve"]
+					"billStatus":"approved"
 				}
 				,"新建预约单":{
-					"name":"驳回",
+					"@name":"驳回",
+					"@predicate":["./action","reject"],
 					"triggleUrl":"/task/submit?action=reject",
-					"predicate":["action","reject"]
+					"billStatus":"created"
 				}
 				,"审批预约单":{
-					"name":"更多审批",
+					"@name":"更多审批",
+					"@predicate":["./action","more"],
 					"triggleUrl":"/task/submit?action=more",
-					"predicate":["action","more"]
+					"billStatus":"committed"
 				}
 				,"<END>":{
-					"name":"下一步",
+					"@name":"下一步",
+					"@predicate":["./action","next"],
 					"triggleUrl":"/task/submit?action=next",
-					"predicate":["action","next"]
+					"billStatus":"finished"
 				}
 			}
 		}
 		,"审阅预约单":{
-			"transitions":{
+			"@transitions":{
 				"<END>":{
-					"name":"同意并下一步",
+					"@name":"同意并下一步",
+					"@predicate":["./action","permit"],
 					"triggleUrl":"/task/submit?action=permit",
-					"predicate":["action","permit"]
+					"billStatus":"finished"
 				}
-				,"created":{
-					"name":"否决",
+				,"新建预约单":{
+					"@name":"否决",
+					"@predicate":["./action","veto"],
 					"triggleUrl":"/task/submit?action=veto",
-					"predicate":["action","veto"]
+					"billStatus":"draft"
 				}
 			}
 		}

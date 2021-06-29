@@ -2,7 +2,7 @@ package testSite.models;
 
 import java.io.Serializable;
 
-import javax.persistence.Table;
+import javax.persistence.*;
 import org.springframework.stereotype.Repository;
 import lombok.Data;
 
@@ -10,7 +10,9 @@ import lombok.Data;
 @Repository
 @Table(name = "wf_book")
 public class Book implements Serializable,Bill<Book> {
-	int id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	Integer id;
 	String billNo;
 	String title;
 	String status;

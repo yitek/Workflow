@@ -3,7 +3,8 @@ package yitek.workflow.core;
 import java.util.*;
 import java.util.function.Function;
 
-import com.alibaba.fastjson.*;
+import com.alibaba.fastjson.JSON;
+
 import yitek.workflow.core.std.*;
 
 // 工作流引擎
@@ -30,82 +31,92 @@ public abstract class LocalSession  implements Session{
 	public Object resolveInstance(String name){ return null;}
 	public Action resolveAction(String actionType){ return null;}
 
-	public <P,R> R transactional(P arg,Function<P,R> fn) throws Exception{
+	public <P,R> R transactional(P arg,Function<P,R> fn){
 		return fn.apply(arg);
 	}
 
-	public void startFlow(String stdName,String version,Dealer dealer,Object params)throws Exception{
-		if(version==null)version="";
-		Diagram diagram = this.diagramRepository().getDiagramByName(stdName,version);
-		Activity activity = new Activity(this,dealer,stdName,version,diagram);
-		this.activityRepository().createActivity(activity._entity);
-		this.active(activity, dealer, params);
-	}
-	void active(Activity activity,Dealer dealer, Object params) throws Exception{
-		StringMap paramsMap = null;
-		if(params instanceof Map) paramsMap = new StringMap(params);
-		else {
-			Object paramsObj = JSONObject.toJSON(params);
-			paramsMap = new StringMap(paramsObj);
+	public Activity startFlow(String stdName,String version,Dealer dealer,Object inputs)throws Exception{
+		try{
+			if(version==null)version="";
+			Diagram diagram = this.diagramRepository().getDiagramByName(stdName,version);
+			Activity activity = new Activity(this,dealer,stdName,version,diagram,inputs);
+			
+			this.activityRepository().createActivity(activity._entity);
+			return this.active(activity, dealer, inputs);
+		}finally{
+			this.activityRepository().dispose();
 		}
+		
+	}
+	Activity active(Activity activity,Dealer dealer, Object params) throws Exception{
+		StringMap paramsMap = null;
 		if(activity.status()== ActivityStates.created){
-			if(!activity.entry(dealer, paramsMap)) return;
+			if(!activity.entry(dealer, activity.inputs())) return activity;
+			boolean auto = activity.state().auto()!=null && activity.state().auto();
+			if(!auto && activity.state().subDiagram()==null){
+				return activity;
+			}
 		}
 		if(activity.status()== ActivityStates.entried || activity.status()== ActivityStates.dealed){
-			if(!activity.deal(dealer, paramsMap)) return;
+			if(params != null) paramsMap = new StringMap(params);
+			if(!activity.deal(dealer, paramsMap)) return activity;
 		}
 		if(activity.status()== ActivityStates.dealed){
 			activity.transfer(dealer);
 		}
+		return activity;
+		
 	}
 
-	public void active(UUID activityId,Dealer dealer,Object params)throws Exception{
-		List<ActivityEntity> entities = this.activityRepository().listLivedActivitiesById(activityId);
-		HashMap<UUID,Activity> acts = new HashMap<UUID,Activity>();
-		Activity curr=null;
-		for(ActivityEntity entity:entities){
-			
-			Activity acti = new Activity(this,entity);
-			acts.put(entity.id(), acti);
-			if(entity.id()==activityId){
-				curr = acti;
+	public Activity active(UUID activityId,Dealer dealer,Object params)throws Exception{
+		try{
+			List<ActivityEntity> entities = this.activityRepository().listLivedActivitiesById(activityId);
+			if(entities==null || entities.size()==0) throw new Exception("该Activity处于不能激活状态(错误，创建或已结束)");
+			HashMap<UUID,Activity> acts = new HashMap<>();
+			Activity curr=null;
+			for(ActivityEntity entity:entities){
+				
+				Activity acti = new Activity(this,entity);
+				acts.put(entity.id(), acti);
+				if(entity.id().equals(activityId)){
+					curr = acti;
+				}
 			}
-		}
-		for(Activity acti : acts.values()){
-			UUID pid = acti._entity.superId();
-			if(pid!=null) {
-				Activity parent = acts.get(pid);
-				acti.superActivity(parent);
+			for(Activity acti : acts.values()){
+				UUID pid = acti._entity.superId();
+				if(pid!=null) {
+					Activity parent = acts.get(pid);
+					acti.superActivity(parent);
+				}
 			}
+			if(curr==null) throw new Exception("无法找到");
+			active(curr, dealer, params);
+			return curr;
+		}finally{
+			this.activityRepository().dispose();
 		}
-		active(curr, dealer, params);
 		
 	}
 	
 	public Activity activity(UUID activityId) throws Exception{
 		ActivityEntity entity = this.activityRepository().getActivityById(activityId);
-		Activity activity = new Activity(this,entity);
-		return activity;
+		return new Activity(this,entity);
 	}
 
 	public Activity activityByTaskId(String taskId) throws Exception{
 		ActivityEntity entity = this.activityRepository().getActivityByTaskId(taskId);
-		Activity activity = new Activity(this,entity);
-		return activity;
+		return new Activity(this,entity);
 	}
 
-	public Boolean recall(UUID activityId,Dealer dealer) throws Exception{
-		return this.transactional(dealer,(opper)->{
-			try{
-				ActivityEntity curr = this.activityRepository().getActivityById(activityId);
-				List<ActivityEntity> undoActivities = Activity.undoableActivities(curr,opper, this);
-				if(undoActivities==null) return false;
-				return this.activityRepository().removeNextActivities(activityId);
-			}catch(Exception ex){
-				return false;
-			}
-			
-		});
+	public Boolean recall(UUID activityId,Dealer dealer) throws Exception {
+		try{
+			ActivityEntity curr = this.activityRepository().getActivityById(activityId);
+			List<ActivityEntity> undoActivities = Activity.undoableActivities(curr,dealer, this);
+			if(undoActivities==null) return false;
+			return this.activityRepository().removeNextActivities(activityId);
+		}finally{
+			this.activityRepository().dispose();
+		}
 		
 	}
 }

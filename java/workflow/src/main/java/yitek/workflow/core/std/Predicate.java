@@ -7,6 +7,10 @@ import yitek.workflow.core.*;
 public class Predicate {
 	PredicateOperations _op;
 	public PredicateOperations op(){return this._op;}
+
+	static Predicate _empty = new Predicate();
+	public static Predicate empty(){return _empty;}
+
 	String _value;
 	public String value(){return this._value;}
 	
@@ -15,9 +19,9 @@ public class Predicate {
 
 	Predicate _right;
 	public Predicate right(){return this._right;}
-
+	private Predicate(){}
 	public Predicate(String value){
-		if(value!=null && (value.startsWith("$.") || value.startsWith("."))){
+		if(value!=null && value.indexOf('/')>=0){
 			this._op = PredicateOperations.member;
 			this._value = value.toString();
 		}
@@ -31,9 +35,10 @@ public class Predicate {
 			Object arg1=null;
 			Object arg2=null;
 			if(opcodes.size()==2){
-				opText = "eq";
+				//opText = "eq";
 				arg1 = opText;
 				arg2 = opcodes.get(1);
+				opText = "eq";
 			}else {
 				arg1 = opcodes.get(1);
 				arg2 = opcodes.get(2);
@@ -43,8 +48,12 @@ public class Predicate {
 			this._left = new Predicate(arg1);
 			this._right = new Predicate(arg2);
 		}else{
-			this._op = PredicateOperations.constant;
-			this._value = value==null?"":value.toString();
+
+			this._value = value==null||value.equals("<FALSE>")?"":value.toString();
+			if(_value.indexOf('/')>=0){
+				this._op = PredicateOperations.member;
+			}else this._op = PredicateOperations.constant;
+
 		}
 	}
 
@@ -53,7 +62,7 @@ public class Predicate {
 		String right =null;
 		switch(this._op){
 			case constant: return this._value;
-			case member: return activity.ResolveMemberString(this._value,from,null);
+			case member: return activity.resolveVariableString(this._value);
 			case eq:
 				left = this._left.eval(activity,from,ctx);
 				right = this._right.eval(activity,from,ctx);

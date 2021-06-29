@@ -1,5 +1,6 @@
 package yitek.workflow.web.services;
 
+import java.util.Arrays;
 import java.util.function.Function;
 
 import org.springframework.beans.BeansException;
@@ -11,7 +12,7 @@ import org.springframework.transaction.*;
 import org.springframework.transaction.support.*;
 import yitek.workflow.core.*;
 
-@Component
+@Service
 public class SpringSession extends LocalSession implements ApplicationContextAware {
 	@Autowired
     private PlatformTransactionManager _transactionManager;
@@ -45,6 +46,7 @@ public class SpringSession extends LocalSession implements ApplicationContextAwa
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         if(_applicationContext == null) {
             _applicationContext = applicationContext;
+
         }
         
 
@@ -76,7 +78,9 @@ public class SpringSession extends LocalSession implements ApplicationContextAwa
         return getBean(name);
     }
 	public Action resolveAction(String actionType){ 
-        return getBean(actionType,Action.class);
+        Object obj = getBean(actionType);
+        if(obj instanceof  Action) return (Action)obj;
+        return null;
     }
 
 }

@@ -7,10 +7,10 @@ import yitek.workflow.core.std.*;
 
 public class Navigation {
 	private LocalSession _session;
-	public Navigation(LocalSession session,Dealer dealer,Activity from, Transition tran) throws Exception{
+	public Navigation(LocalSession session,Dealer dealer,Activity from, Transition tran,Object toInputs) throws Exception{
 		this._session = session;
 		this._from = from;
-		Activity to = this._to = new Activity(tran.to(),dealer,from.superActivity());
+		Activity to = this._to = new Activity(tran.to(),dealer,from.superActivity(),toInputs);
 		this._entity = new NavigationEntity(){{
 			id(UUID.randomUUID());
 			name(tran.name());
@@ -45,7 +45,7 @@ public class Navigation {
 		return this._from;
 	}
 	StringMap _data;
-	StringMap variables() throws Exception{
+	StringMap variables(){
 		if(this._data==null && this._entity!=null && this._entity.transition()!=null){
 			this._data = new StringMap(this._entity.transition());			
 		}
@@ -55,11 +55,11 @@ public class Navigation {
 	public Object get(String key) throws Exception{
 		return this.variables().get(key);
 	}
-	public Object getString(String key) throws Exception{
+	public Object getString(String key) {
 		return this.variables().getString(key);
 	}
 
-	public Object getString(String key,String dft) throws Exception{
+	public Object getString(String key,String dft) {
 		return this.variables().getString(key,dft);
 	}
 }

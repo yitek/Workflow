@@ -6,6 +6,7 @@ import java.util.*;
 public abstract class SqlActivityRepository implements ActivityRepository {
 
 	public abstract Connection connection() throws Exception;
+	
 	public ActivityEntity getActivityById(UUID id) throws Exception{
 		String sql= "SELECT * FROM wf_activity WHERE id=?";//查询student数据表
 		PreparedStatement stmt = this.connection().prepareStatement(sql);
@@ -37,24 +38,27 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 	}
 	public List<ActivityEntity> listLivedActivitiesById(UUID id) throws Exception{
 		
-		String sql= "SELECT flowId FROM wf_activity WHERE id=?";//查询student数据表
+		String sql= "SELECT flowId FROM wf_activity WHERE id=? AND status<>0 AND status<>-1 AND status<>4";//查询student数据表
 		PreparedStatement stmt = this.connection().prepareStatement(sql);
 		stmt.setBytes(1, ActivityEntity.UUID2Bytes(id));
 		ResultSet rs = stmt.executeQuery();
 		byte[] flowId ;
 		if(rs.next()){
-			flowId = rs.getBytes(0);		
-		}else return null;
-		sql= "SELECT * FROM wf_activity WHERE flowId=? AND status<>0 AND status<>4";
-		//查询student数据表
+			flowId = rs.getBytes(1);
+			rs.close();
+		}else{ rs.close();return null;}
+		sql= "SELECT * FROM wf_activity WHERE flowId=? AND status<>0 AND status<>4 AND status<>-1";
+		System.out.println(ActivityEntity.Bytes2UUID(flowId));
 		stmt = this.connection().prepareStatement(sql);
 		stmt.setBytes(1, flowId);
+		rs = stmt.executeQuery();
 		List<ActivityEntity> list = new ArrayList<>();
 		while(rs.next()){
 			ActivityEntity entity = new ActivityEntity();
 			fillEntity(rs, entity);
 			list.add(entity);
 		}
+		rs.close();
 		return list;
 	}
 	
@@ -84,7 +88,7 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 
 	}
 	public List<ActivityEntity> listNextActivities(UUID fromId)throws Exception{
-		String sql= "SELECT id,name,version,pathname,fromId,transitionName,status,createTime,creatorId,creatorName,dealTime,dealerId,dealerName,doneTime,billId,taskId,businessId,actionType,suspended,subCount,isStart FROM wf_activity WHERE fromId=?";
+		String sql= "SELECT id,name,version,pathname,fromId,transitionName,status,createTime,creatorId,creatorName,dealTime,dealerId,dealerName,doneTime,billId,taskId,businessId,actionName,suspended,subCount,startType FROM wf_activity WHERE fromId=?";
 		PreparedStatement stmt = this.connection().prepareStatement(sql);
 		stmt.setBytes(1, ActivityEntity.UUID2Bytes(fromId));
 		ResultSet rs = stmt.executeQuery();
@@ -124,10 +128,10 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 		entity.businessId(rs.getString("businessId"));
 		entity.billId(rs.getString("billId"));
 		entity.taskId(rs.getString("taskId"));
-		entity.taskId(rs.getString("actionType"));
+		entity.actionName(rs.getString("actionName"));
 		entity.suspended(rs.getBoolean("suspended"));
 		entity.subCount(rs.getInt("subCount"));
-		entity.isStart(rs.getBoolean("isStart"));
+		entity.startType(StartTypes.valueOf(rs.getInt("startType")));
 	}
 	public boolean removeNextActivities(UUID fromId)throws Exception{
 		String sql= "DELETE FROM wf_activity WHERE fromId=?";
@@ -135,18 +139,26 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 		stmt.setBytes(1, ActivityEntity.UUID2Bytes(fromId));
 		return stmt.execute();
 	}
+	private final String insertSql = "INSERT INTO wf_activity (" +
+			"id,flowId,superId,name,version,pathname" +
+			",fromId,transitionName," +
+			"status,actionName,startType" +
+			",state,inputs,createTime,creatorId,creatorName)VALUES(" +
+			"?,?,?,?,?,?" +
+			",?,?" +
+			",?,?,?" +
+			",?,?,?,?,?)";//
 	public void createActivity(ActivityEntity entity) throws Exception{
-		String sql= "INSERT INTO wf_activity (id,flowId,superId,name,version,pathname,fromId,transitionName,status,actionType,state,createTime,creatorId,creatorName,isStart)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";//查询student数据表
-		PreparedStatement stmt = this.connection().prepareStatement(sql);
+		PreparedStatement stmt = this.connection().prepareStatement(insertSql);
 		fillCreateStatement(stmt, entity);
 		stmt.execute();
 	}
 	public void createActivities(List<ActivityEntity> entities) throws Exception{
-		String sql= "INSERT INTO wf_activity (id,flowId,superId,name,version,pathname,fromId,transitionName,status,actionType,state,createTime,creatorId,creatorName,isStart)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";//查询student数据表
-		PreparedStatement stmt = this.connection().prepareStatement(sql);
+
+		PreparedStatement stmt = this.connection().prepareStatement(insertSql);
 		for(ActivityEntity entity : entities){
 			fillCreateStatement(stmt, entity);
-			stmt.execute(sql);
+			stmt.execute();
 		}
 		
 	}
@@ -156,7 +168,6 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 		stmt.setBytes(index++,ActivityEntity.UUID2Bytes(entity.id()));
 		stmt.setBytes(index++,ActivityEntity.UUID2Bytes(entity.flowId()));
 		stmt.setBytes(index++,ActivityEntity.UUID2Bytes(entity.superId()));
-
 		stmt.setString(index++,entity.name());
 		stmt.setString(index++,entity.version());
 		stmt.setString(index++,entity.pathname());
@@ -165,21 +176,22 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 		stmt.setString(index++,entity.transitionName());
 
 		stmt.setInt(index++,entity.status().value());
-		
+		stmt.setString(index++, entity.actionName());
+		stmt.setInt(index++,entity.startType().value());
 
-		stmt.setString(index++, entity.actionType());
 		stmt.setString(index++, entity.state());
+		stmt.setString(index++, entity.inputs());
 
 		stmt.setTimestamp(index++,new Timestamp(entity.createTime().getTime()));
 		stmt.setString(index++,entity.creatorId());
-		stmt.setString(index++,entity.creatorName());
-		stmt.setBoolean(index,entity.isStart());
+		stmt.setString(index,entity.creatorName());
+
 	}
 
 	
 
 	public void entryActivity(ActivityEntity entity) throws Exception{
-		String sql= "UPDATE wf_activity SET status=?,inputs=?,params=?,variables=?,dealTime=?,dealerId=?,dealerName=?,state=?,businessId=?,billId=?,taskId=?,subCount=? WHERE id=?";//查询student数据表
+		String sql= "UPDATE wf_activity SET status=?,variables=?,dealTime=?,dealerId=?,dealerName=?,state=?,businessId=?,billId=?,taskId=?,subCount=? WHERE id=?";//查询student数据表
 		PreparedStatement stmt = this.connection().prepareStatement(sql);
 		fillEntryStatement(stmt, entity);
 		stmt.execute();
@@ -188,8 +200,8 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 	static void fillEntryStatement(PreparedStatement stmt,ActivityEntity entity) throws Exception{
 		int index = 1;
 		stmt.setInt(index++,entity.status().value());
-		stmt.setString(index++,entity.inputs());
-		stmt.setString(index++,entity.params());
+		//stmt.setString(index++,entity.inputs());
+		//stmt.setString(index++,entity.params());
 		stmt.setString(index++,entity.variables());
 		
 		stmt.setTimestamp(index++,new Timestamp(entity.dealTime().getTime()));
@@ -208,7 +220,7 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 	}
 
 	public void dealActivity(ActivityEntity entity) throws Exception{
-		String sql= "UPDATE wf_activity SET status=?,params=?,variables=?,results=?,dealTime=?,dealerId=?,dealerName=?,subCount=? WHERE id=?";//查询student数据表
+		String sql= "UPDATE wf_activity SET status=?,params=?,variables=?,results=?,state=?,dealTime=?,dealerId=?,dealerName=?,subCount=? WHERE id=?";//查询student数据表
 		PreparedStatement stmt = this.connection().prepareStatement(sql);
 		fillDealStatement(stmt, entity);
 		stmt.execute();
@@ -219,7 +231,7 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 		stmt.setString(index++,entity.params());
 		stmt.setString(index++,entity.variables());
 		stmt.setString(index++,entity.results());
-
+		stmt.setString(index++,entity.state());
 		stmt.setTimestamp(index++,new Timestamp(entity.dealTime().getTime()));
 		stmt.setString(index++,entity.dealerId());
 		stmt.setString(index++,entity.dealerName());
@@ -243,7 +255,9 @@ public abstract class SqlActivityRepository implements ActivityRepository {
 		stmt.setTimestamp(index++,new Timestamp(entity.dealTime().getTime()));
 		stmt.setString(index++,entity.dealerId());
 		stmt.setString(index++,entity.dealerName());
-		stmt.setTimestamp(index++,new Timestamp(entity.doneTime().getTime()));
+		if(entity.doneTime()==null){
+			stmt.setTimestamp(index++,null);
+		}else stmt.setTimestamp(index++,new Timestamp(entity.doneTime().getTime()));
 
 		stmt.setBytes(index,ActivityEntity.UUID2Bytes(entity.id()));
 	}

@@ -14,7 +14,7 @@ public class Task  implements Serializable{
 	public Task(){}
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-	int id;
+	Integer id;
 	String title;
 	String dealerId;
 	String dealerName;

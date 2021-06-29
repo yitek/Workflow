@@ -11,9 +11,11 @@ public class TaskActionParams {
 	public TaskActionParams(){}
 	int taskId;
 	UUID activityId;
-	String actionName;
+	String action;
 	String billStatus;
 	String dealerId;
 	String dealerName;
+	String nextDealerId;
+	String nextDealerName;
 	JSONObject taskDetails;
 }

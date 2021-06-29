@@ -16,7 +16,7 @@ public class ActivityEntity  {
 		this._creatorId = dealer.id();
 		this._creatorName = dealer.name();
 		this._createTime = new Date();
-		this._isStart= false;
+		this._startType= StartTypes.notStart;
 	}
 	// flow的创建
 	public ActivityEntity(String name,String version, Map<String,Object> diagramState,Dealer dealer){
@@ -25,7 +25,7 @@ public class ActivityEntity  {
 		this._pathname = this._name;
 		this._version = version;
 		this._state = JSON.toJSONString(diagramState);
-		this._isStart= false;
+		this._startType= StartTypes.flowStart;
 	}
 	// start的创建
 	public ActivityEntity(String name,Map<String,Object> state,Dealer dealer,ActivityEntity superEntity){
@@ -35,7 +35,7 @@ public class ActivityEntity  {
 		this._superId = superEntity._id;
 		this._flowId = superEntity._flowId;
 		this._version = superEntity._version;
-		this._isStart= false;
+		this._startType= StartTypes.diagramStart;
 	}
 	// 下一步
 	public ActivityEntity(Dealer dealer,Transition transition,ActivityEntity from) throws Exception{
@@ -50,7 +50,7 @@ public class ActivityEntity  {
 		this._businessId = from._businessId;
 		this._billId = from._billId;
 		this._taskId =from._taskId;
-		this._isStart= false;
+		this._startType= StartTypes.notStart;
 	}
 
 	UUID _id;
@@ -86,9 +86,9 @@ public class ActivityEntity  {
 	public String transitionName() {return this._transitionName;}
 	public ActivityEntity transitionName(String value){ this._transitionName = value;return this;}
 
-	String _actionType;
-	public String actionType() {return this._actionType;}
-	public ActivityEntity actionType(String value){ this._actionType = value;return this;}
+	String _actionName;
+	public String actionName() {return this._actionName;}
+	public ActivityEntity actionName(String value){ this._actionName = value;return this;}
 
 	
 
@@ -170,9 +170,9 @@ public class ActivityEntity  {
 	public Integer subCount(){return this._subCount; }
 	public ActivityEntity subCount(Integer value){this._subCount=value;return this;}
 
-	Boolean _isStart;
-	public Boolean isStart(){ return this._isStart;}
-	public ActivityEntity isStart(Boolean value){this._isStart=value;return this;}
+	StartTypes _startType;
+	public StartTypes startType(){ return this._startType;}
+	public ActivityEntity startType(StartTypes value){this._startType=value;return this;}
 
 
 	List<ActivityEntity> _subordinates;

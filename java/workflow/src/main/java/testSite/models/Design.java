@@ -4,7 +4,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.springframework.stereotype.Repository;
 
@@ -13,7 +13,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 @Table(name = "wf_design")
 public class Design  implements Serializable,Bill<Design>{
-	int id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	Integer id;
 	String billNo;
 	String title;
 	String status; 

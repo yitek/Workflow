@@ -14,7 +14,7 @@ CREATE TABLE wf_activity(
 	,variables TEXT NULL
 	,results TEXT NULL
 	,`state` TEXT NULL
-	,actionType VARCHAR(516) NULL
+	,actionName VARCHAR(516) NULL
 	,createTime DATETIME NOT NULL 
 	,creatorId VARCHAR(64) NOT NULL
 	,creatorName VARCHAR(64) NOT NULL
@@ -27,6 +27,6 @@ CREATE TABLE wf_activity(
 	,taskId VARCHAR(64) NULL
 	,suspended INT NOT NULL DEFAULT 0
 	,subCount INT NULL
-	,isStart INT NOT NULL DEFAULT 0
+	,startType INT NOT NULL DEFAULT 0
 
 )

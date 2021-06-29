@@ -9,8 +9,8 @@ public interface Session extends FlowContext {
 	Object resolveInstance(String name);
 	Action resolveAction(String actionType);
 
-	void startFlow(String stdName,String version,Dealer dealer,Object params )throws Exception;
-	void active(UUID activityId,Dealer dealer,Object params)throws Exception;
+	Activity startFlow(String stdName,String version,Dealer dealer,Object params )throws Exception;
+	Activity active(UUID activityId,Dealer dealer,Object params)throws Exception;
 
 	Boolean recall(UUID activityId,Dealer dealer)throws Exception;
 

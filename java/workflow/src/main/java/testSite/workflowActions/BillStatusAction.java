@@ -4,30 +4,27 @@ import org.springframework.stereotype.Service;
 import testSite.BaseRepository;
 import testSite.models.Bill;
 import yitek.workflow.core.*;
+import yitek.workflow.core.std.Transition;
 
-import java.util.HashMap;
-
-@Service
+@Service("billStatusAction")
 public class BillStatusAction extends TaskAction {
     BaseRepository<Bill> _repository;
 
     @Override
-    public Object deal(Activity activity, Dealer dealer, StringMap params, FlowContext ctx) {
-
-        Object action = params.get("action");
-        if(action==null) return null;
-        super.deal(activity,dealer,params,ctx);
-        String billService = activity.variables("billService").toString();
-        String billStatus = activity.variables("billStatus").toString();
+	public Boolean entry(Activity activity ,Dealer dealer,StringMap inputs,DiagramBuilder builder,FlowContext ctx) throws Exception{
+        
+        return super.entry(activity, dealer, inputs, builder, ctx);
+    }
+    @Override
+    public Object transfer(Activity activity,Dealer dealer,Transition transition,FlowContext ctx)throws Exception{
+        String nextBillStatus = transition.getString("billStatus");
+        String billService = activity.variables().getString("billService");
+        if(billService==null) throw new Exception("节点"+activity.pathname() + "未配置billService");
         this._repository = (BaseRepository<Bill>) ctx.resolveInstance(billService);
         Bill bill = this._repository.selectByPrimaryKey(activity.billId());
-        bill.setStatus(billStatus);
+        bill.setStatus(nextBillStatus);
         this._repository.updateByPrimaryKey(bill);
-        return new HashMap<String,Object>(){
-            {
-                put("billStatus", billStatus);
-                put("dealer",dealer);
-            }
-        };
+        return new StringMap();
     }
+    
 }

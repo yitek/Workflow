@@ -5,7 +5,7 @@ spring:
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
+jpa:
     hibernate:
       naming:
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
@@ -22,3 +22,7 @@ mapper:
   #公用接口类路径
   mappers: testSite.BaseRepository
   identity: MYSQL
+
+logging:
+  level:
+    testSite.repositories: debug

@@ -3,6 +3,7 @@ package yitek.workflow.core;
 import java.util.*;
 
 public interface ActivityRepository {
+	void dispose() throws Exception;
 	ActivityEntity getActivityById(UUID id) throws Exception;
 	ActivityEntity getActivityByTaskId(String id) throws Exception;
 

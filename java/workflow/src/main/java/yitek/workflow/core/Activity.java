@@ -2,39 +2,44 @@ package yitek.workflow.core;
 
 import java.util.*;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.*;
 
 import yitek.workflow.core.std.*;
 
 public class Activity {
 	// Flow创建
-	public Activity(LocalSession session,Dealer dealer,String name,String version,Diagram diagram) throws Exception{
+	public Activity(LocalSession session,Dealer dealer,String name,String version,Diagram diagram,Object inputs) throws Exception{
 		this._session = session;
 		this._state = State.createFlow(name, diagram);
 		this._entity = new ActivityEntity(name,version,this._state.jsonObject(),dealer);
+		this._inputs = new StringMap(inputs);
+		this._entity.inputs(JSON.toJSONString(inputs));
 		//this._entity.actionType(diagram.actionType());
-		this._entity.isStart(true);
+		
 	}	
 	// 子级别创建
-	public Activity(State subState,Dealer dealer,Activity superActivity) throws Exception{
+	public Activity(State subState,Dealer dealer,Activity superActivity,Object inputs) throws Exception{
 		
 		this._entity = new ActivityEntity(subState.name(),subState.jsonObject(),dealer,superActivity._entity);
-		this._entity.actionType(subState.actionType());
+		this._entity.actionName(subState.actionName());
 		this._state = subState;
 		this.superActivity(superActivity);
-		this._entity.actionType(subState.actionType());
+		this._entity.actionName(subState.actionName());
 		this._session = superActivity.session();
+		this._inputs = new StringMap(inputs);
+		this._entity.inputs(JSON.toJSONString(inputs));
 	}
-	public Activity(Dealer dealer,Transition transition,Activity fromActivity) throws Exception{
+	public Activity(Dealer dealer,Transition transition,Activity fromActivity,Object inputs) throws Exception{
 		State state = transition.to();
 		this._entity = new ActivityEntity(transition.to().name(),state.jsonObject(),dealer,fromActivity._entity);
-		this._entity.actionType(transition.to().actionType());
+		this._entity.actionName(transition.to().actionName());
 		this._state = state;
 		this.superActivity(fromActivity.superActivity());
 		this._session = fromActivity.session();
 		this._fromActivity = fromActivity;
 		this._entity.fromId(fromActivity.id());
+		this._inputs = new StringMap(inputs);
+		this._entity.inputs(JSON.toJSONString(inputs));
 	}
 	//普通的getById
 	public Activity(LocalSession engine,ActivityEntity entity){
@@ -57,7 +62,7 @@ public class Activity {
 	public Activity superActivity() throws Exception{
 		if(this._superActivity==null){
 			if(this._entity.superId()!=null){
-				if(this._entity.superId()==this._entity.id()) this.superActivity(this);
+				if(this._entity.superId().equals(this._entity.id())) this.superActivity(this);
 				else this.superActivity(this._session.activity(this._entity.id()));
 			}
 		}
@@ -65,13 +70,13 @@ public class Activity {
 	}
 	
 	Activity superActivity(Activity value){
-		if(this._superActivity==value) return this;
+		if(this._superActivity==value || this==value) return this;
 		if(this._superActivity!=null){
 			this._superActivity._subsidiaries.remove(value);
 		}
 		this._superActivity = value; 
 		if(value._subsidiaries ==null)value._subsidiaries = new ArrayList<>();
-		value._subsidiaries.add(value);
+		value._subsidiaries.add(this);
 		return this;
 	}
 
@@ -141,8 +146,8 @@ public class Activity {
 		return this;
 	}
 	
-	public boolean isStart(){
-		return this._entity.isStart();
+	public StartTypes startType(){
+		return this._entity.startType();
 	}
 
 	public String transitionName(){
@@ -157,10 +162,10 @@ public class Activity {
 	State _state;
 	public State state() throws Exception{
 		if(_state==null){
-			JSONObject json = JSON.parseObject(this._entity.state());
+			StringMap defMap = new StringMap(this._entity.state());
 			Diagram ownDiagram = null;
-			if(this.superActivity()!=null) ownDiagram = this.superActivity().state().subDiagram();
-			this._state = new State(this._entity.name(),json,ownDiagram);
+			if(this.superActivity()!=null && !this.superActivity().equals(this)) ownDiagram = this.superActivity().state().subDiagram();
+			this._state = new State(this._entity.name(),defMap,ownDiagram);
 		}
 		return this._state;
 	}
@@ -176,7 +181,10 @@ public class Activity {
 	StringMap _results;
 	public StringMap results(){
 		if(this._results==null && this._entity._results!=null){
-			this._results = new StringMap(JSON.parseObject(this._entity.results())).readonly(true);
+			this._results = new StringMap(JSON.parseObject(this._entity.results()));
+			if(this.status()!= ActivityStates.dealed){
+				this._results.readonly(true);
+			}
 		}
 		return this._results;
 	}
@@ -191,6 +199,23 @@ public class Activity {
 
 	public Object variables(String name){
 		return this.variables().get(name);
+	}
+
+	private void setDealer(Dealer dealer){
+		this._entity.dealerId(dealer.id());
+		this._entity.dealTime(new Date());
+		this._entity.dealerName(dealer.name());
+	}
+
+	private Action _action;
+	public Action action(){
+		if(_action==null){
+			if(this._entity.actionName()!=null){
+				this._action = this.session().resolveAction(this._entity.actionName());
+			}else this._action = BasAction.empty();
+		}
+		return this._action==BasAction.empty()?null:this._action;
+		
 	}
 
 	// 进入阶段
@@ -211,7 +236,7 @@ public class Activity {
 				String key = pair.getKey();
 				Object value;
 				for(String memberExpr: pair.getValue()){
-					value = this.resolveMember(memberExpr, this.fromActivity(),"..");
+					value = this.resolveVariable(memberExpr);
 					if(value!=null){
 						variables.put(key, value);
 						break;
@@ -219,11 +244,21 @@ public class Activity {
 				}
 			}
 		}
-		// 继续构造variables
+		// inputs的值进入到variables
 		if(inputs!=null){
-			for(Map.Entry<String,Object> entry : inputs.entrySet()){
-				variables.put(entry.getKey(), entry.getValue());
+			if(this.state().internals()!=null){
+				List<String> internals = this.state().internals();
+				for(Map.Entry<String,Object> entry : inputs.entrySet()){
+					String key = entry.getKey();
+					if(internals.stream().anyMatch(p->p.equals(key))) continue;
+					variables.put(key, entry.getValue());
+				}
+			}else{
+				for(Map.Entry<String,Object> entry : inputs.entrySet()){
+					variables.put(entry.getKey(), entry.getValue());
+				}
 			}
+			
 		}
 		if(this.state().subDiagram() instanceof  ReferenceDiagram){
 			Diagram diagram = this.session().diagramRepository().getDiagramByName(((ReferenceDiagram) this.state().subDiagram()).reference(),this._entity.version());
@@ -232,10 +267,9 @@ public class Activity {
 		this._entity._inputs = JSON.toJSONString(inputs);
 		this._inputs = inputs;
 		this._variables = variables;
-		if(this._entity._actionType!=null){
-			Action action = this.session().resolveAction(this._entity.actionType());
-			DiagramBuilder builder = new DiagramBuilder();
-			if(!action.entry(this,dealer, inputs,builder, this.session())){
+		if(this.action()!=null){
+			DiagramBuilder builder = new DiagramBuilder(this.state());
+			if(!this.action().entry(this,dealer, inputs,builder, this.session())){
 				return false;
 			}
 			Diagram subDiagram = builder.build();
@@ -250,21 +284,27 @@ public class Activity {
 		this.session().activityRepository().entryActivity(_entity);		
 		return true;
 	}
-	private void setDealer(Dealer dealer){
-		this._entity.dealerId(dealer.id());
-		this._entity.dealTime(new Date());
-		this._entity.dealerName(dealer.name());
-	}
+	
 
-	protected Boolean deal(Dealer dealer,StringMap params) throws Exception{
+	protected Boolean deal(Dealer dealer,StringMap rawParams) throws Exception{
 		
-		if(this.dealSubDiagram(dealer, params)) return false;
+		if(this.dealSubDiagram(dealer, rawParams)) return false;
 		if(this.status()!= ActivityStates.entried && this.status()!= ActivityStates.dealed) return false;
+		StringMap params = rawParams;
 		this.setDealer(dealer);
 		Object results;
-		if(this._entity._actionType!=null){
-			Action action = this.session().resolveAction(this._entity.actionType());
-			results = action.deal(this,dealer, params, this.session());
+		if(this.action()!=null){
+			if(this.state().subDiagram()==null){
+				DiagramBuilder builder = new DiagramBuilder(this.state());
+				results = this.action().deal(this,dealer, params,builder, this.session());
+				Diagram sub = builder.build();
+				if(sub!=null){
+					throw new Exception("TODO: not implement.在deal时开启子流程");
+				}
+			}else{
+				results = this.action().deal(this,dealer, params,null, this.session());
+			}
+			
 			if(results==null){
 				return false;
 			}
@@ -274,19 +314,39 @@ public class Activity {
 				this.session().activityRepository().dealActivity(_entity);
 				return false;
 			}
-		}else results = params;
-		
+		}else {
+			StringMap filteredParams=null;
+			if(this.state().params()!=null){
+				filteredParams = new StringMap();
+				for(String n:this.state().params()){
+					filteredParams.put(n, params.get(n));
+				}
+			}
+			List<String> internals = this.state().internals();
+			if(internals!=null && filteredParams!=null){
+				params = filteredParams;
+				filteredParams = new StringMap();
+				for(Map.Entry<String,Object> entry:params.entrySet()){
+					String key = entry.getKey();
+					if(internals.stream().anyMatch(p->p.equals(key)))continue;
+					filteredParams.put(key, entry.getValue());
+				}
+			}
+			if(filteredParams!=null)results= filteredParams;
+			else results = rawParams;
+		}
 		if(results!=null){
-			StringMap resultsJSON = this._results = new StringMap(JSON.toJSON(results));
+			StringMap resultsJSON = this._results = new StringMap(results);
 			StringMap variables = this.variables();
-
+			variables.readonly(false);
 			for(Map.Entry<String,Object> entry : resultsJSON.entrySet()){
 				variables.put(entry.getKey(),entry.getValue());
 			}
+			variables.readonly(true);
 			this._entity.variables(JSON.toJSONString(variables));
 			this._entity.results(JSON.toJSONString(results));
 		}
-		this._entity.params(JSON.toJSONString(params));
+		this._entity.params(JSON.toJSONString(rawParams));
 		this.status(ActivityStates.dealed);
 		this.session().activityRepository().dealActivity(_entity);
 		return true;
@@ -301,19 +361,18 @@ public class Activity {
 		this._entity.params(JSON.toJSONString(params));
 		this.status(ActivityStates.dealing);
 		this.session().activityRepository().dealActivity(_entity);
-		if(subDiagram!=null){
-			int count = 0;
-			for(State startState :subDiagram.starts()){
-				count++;
-				Activity subActivity = new Activity(startState,dealer,this);
-				subActivity._entity.isStart(true);
-				subActivity.fromActivity(this.fromActivity());
-				this.session().activityRepository().createActivity(subActivity._entity);
-				this.session().active(subActivity, dealer, params);
-			}
-			this._entity._subCount = count;
+		int count = 0;
+		for(State startState :subDiagram.starts()){
+			count++;
+			Activity subActivity = new Activity(startState,dealer,this,this._inputs);
+			subActivity._entity.startType(StartTypes.diagramStart);
+			subActivity.fromActivity(this.fromActivity());
+			this.session().activityRepository().createActivity(subActivity._entity);
+			this.session().active(subActivity, dealer, this.inputs());
 		}
-
+		//this._entity._subCount = count;
+		//this.status(ActivityStates.dealed);
+		//this.session().activityRepository().dealActivity(_entity);
 		return true;
 	}
 	
@@ -343,8 +402,16 @@ public class Activity {
 		
 		List<ActivityEntity> nextActEntities = new ArrayList<>();
 		for(Transition transition : transitions){
+			Object nextInputs=null;
+			if(this.action()!=null){
+				nextInputs = this.action().transfer(this, dealer, transition, _session);
+				if(nextInputs==null) return new ArrayList<>();
+				else if(StringMap.empty()==nextInputs) continue;
+			}
 			if(transition.to()!=State.empty()){
-				Activity acti = new Activity(dealer,transition,this.superActivity());
+
+				Activity acti = new Activity(dealer,transition,this.superActivity(),nextInputs);
+				acti.fromActivity(this);
 				nextActivities.add(acti);
 				nextActEntities.add(acti._entity);
 			}
@@ -361,20 +428,18 @@ public class Activity {
 
 		//调用新节点的entry
 		for(Activity nextActivity:nextActivities){
-			this.session().active(nextActivity, dealer, this._results);
+			this.session().active(nextActivity, dealer, nextActivity.inputs());
 		}
 		return nextActivities;
 	}	
 
 	protected Boolean exit(Dealer dealer) throws Exception{
-		Boolean canFinish = true;
-		if(this._entity._actionType!=null){
-			Action action = this.session().resolveAction(this._entity.actionType());
-			canFinish = action.exit(this,dealer, this.session());
+		if(this.action()!=null){
+			if(!this.action().exit(this,dealer, this.session())) return false;
 		}
-		if(!canFinish) return false;
 		this.setDealer(dealer);
 		this.status(ActivityStates.exited);
+		this._entity.doneTime(new Date());
 		this.session().activityRepository().exitActivity(_entity);
 		if(this.superActivity()!=null && this.superActivity()!=this){
 			Map<String,List<String>> exports = this.state().exports();
@@ -385,7 +450,7 @@ public class Activity {
 					String key = pair.getKey();
 					Object value;
 					for(String memberExpr: pair.getValue()){
-						value = this.resolveMember(memberExpr, this,".");
+						value = this.resolveVariable(memberExpr);
 						if(value!=null){
 							superVariables.put(key, value);
 							break;
@@ -437,47 +502,61 @@ public class Activity {
 	// /abc.abc :表示根的变量
 	// ?/abc.abc : 表示从各级activity查找变量
 	// ~/abc.abc: 表示从prevActivity查找变量
-	public Object resolveMember(String memberExpr,Activity prev,String defaultScope) throws Exception{
+	public Object resolveVariable(String memberExpr) throws Exception{
 		if(memberExpr==null) return null;
 		int at = memberExpr.indexOf("/");
 		String scope;
 		String varnames;
 		if(at<0) {
-			scope = defaultScope;
-			varnames = memberExpr;
+			return memberExpr;
 		}else{
 			scope = memberExpr.substring(0,at);
 			varnames = memberExpr.substring(at+1);
 		}
-		if(scope==null) return memberExpr;
+		if(varnames.length()==0) return memberExpr;
 	
-		Object target=null;
+		Activity targetActivity=null;
 		String[] pathnames = varnames.split("\\.");
-		if(pathnames.length==0)  pathnames = new String[]{varnames};
-		String varname = pathnames[0];
 		switch (scope) {
-			case "" -> target = this.flow().variables(varname);
-			case "." -> target = this.variables(varname);
-			case ".." -> target = this.superActivity().variables(varname);
-			case "~" -> {
-				if (prev == null) return null;
-				target = prev.variables(varname);
-			}
-			case "?" -> {
-				Activity acti = this;
-				while (acti != null) {
-					target = acti.variables(varname);
-					if (target != null) break;
-					if (acti == acti.superActivity()) break;
-					acti = acti.superActivity();
-				}
-			}
+			case "" -> targetActivity = this.flow();
+			case ".", "?" -> targetActivity = this;
+			case ".." -> targetActivity = this.superActivity();
+			case "~" -> targetActivity = this.fromActivity();
 		}
-		return StringMap.resolve(target, pathnames,1);
+		if(targetActivity==null) return null;
+		if(pathnames.length==0) {
+			if(varnames.charAt(0)=='@'){
+				return resolvePropertyValue(targetActivity,varnames);
+			}
+			pathnames = new String[]{varnames};
+		}
+		String varname = pathnames[0];
+		Object value=null;
+		if(scope.equals("?")){
+			while (targetActivity != null) {
+				value = targetActivity.variables(varname);
+				if (value != null) break;
+				if (targetActivity == targetActivity.superActivity()) break;
+				targetActivity = targetActivity.superActivity();
+			}
+		}else value = targetActivity.variables(varname);
+		
+		return value==null?null:StringMap.resolve(value, pathnames,1);
 	}
 
-	public String ResolveMemberString(String memberExpr,Activity prev,String defaultScope) throws Exception{
-		Object value = this.resolveMember(memberExpr,prev,defaultScope);
+	static Object resolvePropertyValue(Activity activity,String name){
+		if(name.equals("@name")) return activity._entity.name();
+		if(name.equals("@id")) return activity.id();
+		if(name.equals("@transitionName")) return activity.transitionName();
+		if(name.equals("@billId")) return activity.billId();
+		if(name.equals("@businessId")) return activity.businessId();
+		if(name.equals("@taskId")) return activity.taskId();
+		return null;
+	}
+
+	public String resolveVariableString(String memberExpr) throws Exception{
+		Object value = this.resolveVariable(memberExpr);
+		//if(value==null) return "";
 		return value==null?"":value.toString();
 	}
 

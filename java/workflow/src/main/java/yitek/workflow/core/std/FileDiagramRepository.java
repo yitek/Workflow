@@ -5,6 +5,8 @@ import java.nio.file.*;
 
 import com.alibaba.fastjson.*;
 
+import yitek.workflow.core.StringMap;
+
 
 public class FileDiagramRepository implements DiagramRepository {
 	String baseDir;
@@ -45,6 +47,6 @@ public class FileDiagramRepository implements DiagramRepository {
                 reader.close();
             }
         }
-		return new Diagram(JSON.parseObject(readJson),null);
+		return new Diagram(new StringMap(readJson),null);
 	}	
 }
