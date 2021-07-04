@@ -1,0 +1,9 @@
+D:\Yitek\Workflow\dotnet\Yitec.Workflow\bin\Debug\netcoreapp3.1\Yitec.Workflow.deps.json
+D:\Yitek\Workflow\dotnet\Yitec.Workflow\bin\Debug\netcoreapp3.1\Yitec.Workflow.dll
+D:\Yitek\Workflow\dotnet\Yitec.Workflow\bin\Debug\netcoreapp3.1\Yitec.Workflow.pdb
+D:\Yitek\Workflow\dotnet\Yitec.Workflow\obj\Debug\netcoreapp3.1\Yitec.Workflow.AssemblyInfoInputs.cache
+D:\Yitek\Workflow\dotnet\Yitec.Workflow\obj\Debug\netcoreapp3.1\Yitec.Workflow.AssemblyInfo.cs
+D:\Yitek\Workflow\dotnet\Yitec.Workflow\obj\Debug\netcoreapp3.1\Yitec.Workflow.csproj.CoreCompileInputs.cache
+D:\Yitek\Workflow\dotnet\Yitec.Workflow\obj\Debug\netcoreapp3.1\Yitec.Workflow.dll
+D:\Yitek\Workflow\dotnet\Yitec.Workflow\obj\Debug\netcoreapp3.1\Yitec.Workflow.pdb
+D:\Yitek\Workflow\dotnet\Yitec.Workflow\obj\Debug\netcoreapp3.1\Yitec.Workflow.csprojAssemblyReference.cache

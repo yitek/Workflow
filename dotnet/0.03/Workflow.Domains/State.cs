@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -15,7 +15,7 @@ namespace Workflow.Domains
         /// <summary>
         /// 状态迁移对象，从该对象出发的所有迁移对象
         /// </summary>
-        public IEnumerable<Transaction> Transactions { get; private set; }
+        public IEnumerable<Transiction> Transactions { get; private set; }
 
         IReadOnlyDictionary<string,string> Imports { get; set; }
         IReadOnlyDictionary<string, string> Exports { get; set; }

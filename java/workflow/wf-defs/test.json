@@ -2,7 +2,7 @@
 	"@name":"order",
 	"@start":"审批预约单",
 	"@actionName":"billStatusAction",
-	"@variables":{"author":"yiy","billService":"bookRepository"},
+	"@variables":{"author":"yiy","!billServiceName":"bookRepository"},
 	"@imports": {
 		"prevDealer": "./dealer",
 		"creator": "./creator"

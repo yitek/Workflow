@@ -1,20 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Class Name="Workflow.Domains.State">
-    <Position X="4" Y="1.25" Width="1.5" />
+    <Position X="4.75" Y="3.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>gACAAAAAAAAAAAAAAAAEAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>gACAAAAAAAAAAAAAAAAEAAQAAAAAAAAAAAAAAAAAAgA=</HashCode>
       <FileName>State.cs</FileName>
     </TypeIdentifier>
     <ShowAsCollectionAssociation>
       <Property Name="Transactions" />
     </ShowAsCollectionAssociation>
   </Class>
-  <Class Name="Workflow.Domains.Transaction">
-    <Position X="7.5" Y="1.25" Width="1.5" />
+  <Class Name="Workflow.Domains.Transiction">
+    <Position X="4.75" Y="1.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AgAAAAAAAEAAAAAAAAAAAAQAAAAIAAAAAAAAAAAAAAA=</HashCode>
-      <FileName>Transaction.cs</FileName>
+      <FileName>Transiction.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
       <Property Name="Predicate" />
@@ -23,14 +23,17 @@
     </ShowAsAssociation>
   </Class>
   <Class Name="Workflow.Domains.Predicate">
-    <Position X="10.25" Y="1.25" Width="1.5" />
+    <Position X="10" Y="1.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAA=</HashCode>
       <FileName>Predicate.cs</FileName>
     </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Type" />
+    </ShowAsAssociation>
   </Class>
   <Class Name="Workflow.Domains.PoundState">
-    <Position X="4" Y="3.5" Width="1.5" />
+    <Position X="4.75" Y="6" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAA=</HashCode>
       <FileName>PoundState.cs</FileName>
@@ -40,38 +43,66 @@
     </ShowAsCollectionAssociation>
   </Class>
   <Class Name="Workflow.Domains.Predicates.ConstantPredicate" Collapsed="true">
-    <Position X="9.75" Y="3" Width="1.5" />
+    <Position X="8.75" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
       <FileName>Predicates\ConstantPredicate.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Workflow.Domains.Predicates.StatusPredicate" Collapsed="true">
-    <Position X="8" Y="3" Width="1.5" />
+    <Position X="6.75" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAA=</HashCode>
       <FileName>Predicates\StatusPredicate.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Workflow.Domains.Predicates.OperandPredicate" Collapsed="true">
-    <Position X="11.75" Y="3" Width="1.5" />
+    <Position X="11" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAA=</HashCode>
       <FileName>Predicates\OperandPredicate.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Workflow.Domains.Predicates.BinaryPredicate" Collapsed="true">
-    <Position X="13.5" Y="3" Width="1.5" />
+    <Position X="13.5" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACACAAAAAAAA=</HashCode>
       <FileName>Predicates\BinaryPredicate.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Enum Name="Workflow.Domains.PredicateTypes">
-    <Position X="13.25" Y="1.5" Width="1.5" />
+  <Class Name="Workflow.Domains.Activity">
+    <Position X="0.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BAACAAAEgQAAAQQBCAAAAAAAAAAAAABAAAAIAAACAAA=</HashCode>
+      <FileName>Activity.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="BluePrint" />
+      <Property Name="SupperActivity" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="PaddingActivities" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Interface Name="Workflow.Domains.IDealer" Collapsed="true">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>IDealer.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="Workflow.Domains.PredicateTypes" Collapsed="true">
+    <Position X="13.5" Y="1.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAEAAAAAAgAwAAAAAAAACAAAAgAAAAkAAFAACA=</HashCode>
       <FileName>PredicateTypes.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="Workflow.Domains.ActivityStates">
+    <Position X="2.5" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAQAAAAQIAAAAAAEAAAAAAAAAAAAIAAAACAAA=</HashCode>
+      <FileName>ActivityStates.cs</FileName>
     </TypeIdentifier>
   </Enum>
   <Font Name="Microsoft YaHei UI" Size="9" />
