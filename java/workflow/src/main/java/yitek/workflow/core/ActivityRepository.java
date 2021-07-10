@@ -11,7 +11,7 @@ public interface ActivityRepository {
 	List<ActivityEntity> listActivitiesBySuperId(UUID supperId)throws Exception;
 	Integer countLivedSubordinatesBySuperId(UUID superId)throws Exception;
 	List<ActivityEntity> listNextActivities(UUID fromId)throws Exception;
-	boolean removeNextActivities(UUID fromId)throws Exception;
+	boolean removeActivityById(UUID aId)throws Exception;
 
 	void entryActivity(ActivityEntity entity)throws Exception;
 	void dealActivity(ActivityEntity entity)throws Exception;

@@ -36,11 +36,18 @@ public abstract class LocalSession  implements Session{
 	}
 
 	public Activity startFlow(String stdName,String version,Dealer dealer,Object inputs)throws Exception{
+		return startFlow(stdName,version,dealer,inputs,null);
+		
+	}
+	public Activity startFlow(String stdName,String version,Dealer dealer,Object inputs,Object bill)throws Exception{
+		return startFlow(stdName, version, dealer, inputs,bill,null);
+	}
+	public Activity startFlow(String stdName,String version,Dealer dealer,Object inputs,Object bill,List<String> starts)throws Exception{
 		try{
 			if(version==null)version="";
 			Diagram diagram = this.diagramRepository().getDiagramByName(stdName,version);
-			Activity activity = new Activity(this,dealer,stdName,version,diagram,inputs);
-			
+			Activity activity = new Activity(this,dealer,stdName,version,diagram,inputs,starts);
+			activity.bill(bill);
 			this.activityRepository().createActivity(activity._entity);
 			return this.active(activity, dealer, inputs);
 		}finally{
@@ -49,26 +56,32 @@ public abstract class LocalSession  implements Session{
 		
 	}
 	Activity active(Activity activity,Dealer dealer, Object params) throws Exception{
-		StringMap paramsMap = null;
-		if(activity.status()== ActivityStates.created){
-			if(!activity.entry(dealer, activity.inputs())) return activity;
-			boolean auto = activity.state().auto()!=null && activity.state().auto();
-			if(!auto && activity.state().subDiagram()==null){
-				return activity;
+		try{
+			StringMap paramsMap = null;
+			if(activity.activityStatus()== ActivityStates.created){
+				if(!activity.entry(dealer, activity.inputs())) return activity;
+				boolean auto = activity.state().auto()!=null && activity.state().auto();
+				if(!auto && activity.state().subDiagram()==null){
+					return activity;
+				}
+				activity._entity.isAuto(true);
 			}
+			if(activity.activityStatus()== ActivityStates.entried || activity.activityStatus()== ActivityStates.dealed){
+				if(params != null) paramsMap = new StringMap(params);
+				if(!activity.deal(dealer, paramsMap)) return activity;
+			}
+			if(activity.activityStatus()== ActivityStates.dealed){
+				activity.transfer(dealer);
+			}
+			return activity;
+		}finally{
+			this.activityRepository().dispose();
 		}
-		if(activity.status()== ActivityStates.entried || activity.status()== ActivityStates.dealed){
-			if(params != null) paramsMap = new StringMap(params);
-			if(!activity.deal(dealer, paramsMap)) return activity;
-		}
-		if(activity.status()== ActivityStates.dealed){
-			activity.transfer(dealer);
-		}
-		return activity;
+		
 		
 	}
 
-	public Activity active(UUID activityId,Dealer dealer,Object params)throws Exception{
+	public Activity active(UUID activityId,Dealer dealer,Object params,Object bill,Object task)throws Exception{
 		try{
 			List<ActivityEntity> entities = this.activityRepository().listLivedActivitiesById(activityId);
 			if(entities==null || entities.size()==0) throw new Exception("该Activity处于不能激活状态(错误，创建或已结束)");
@@ -89,13 +102,18 @@ public abstract class LocalSession  implements Session{
 					acti.superActivity(parent);
 				}
 			}
-			if(curr==null) throw new Exception("无法找到");
+			if(curr==null) throw new Exception("无法找到活动");
+			curr.bill(bill).task(task);
 			active(curr, dealer, params);
 			return curr;
 		}finally{
 			this.activityRepository().dispose();
 		}
 		
+	}
+
+	public Activity active(UUID activityId,Dealer dealer,Object params)throws Exception{
+		return this.active(activityId,dealer,params,null,null);
 	}
 	
 	public Activity activity(UUID activityId) throws Exception{
@@ -109,14 +127,9 @@ public abstract class LocalSession  implements Session{
 	}
 
 	public Boolean recall(UUID activityId,Dealer dealer) throws Exception {
-		try{
-			ActivityEntity curr = this.activityRepository().getActivityById(activityId);
-			List<ActivityEntity> undoActivities = Activity.undoableActivities(curr,dealer, this);
-			if(undoActivities==null) return false;
-			return this.activityRepository().removeNextActivities(activityId);
-		}finally{
-			this.activityRepository().dispose();
-		}
-		
+		ActivityEntity entity = this.activityRepository().getActivityById(activityId);
+		Activity activity =  new Activity(this,entity);
+		activity.recall(dealer);
+		return true;
 	}
 }

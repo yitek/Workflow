@@ -19,6 +19,15 @@ public class Transition {
 		}
 		return this._name;
 	}
+
+	String _disabled;
+	public boolean disabled(){
+		if(this._disabled==null){
+			this._disabled = this._data.getString("@disabled");
+			if(this._disabled==null) this._disabled="";
+		}
+		return this._disabled.equals("")||this._disabled.equals("false") ||this._disabled.equals("0")?false:true;
+	}
 	//public Transition setName(String value) { this._name= value; return this;}
 
 	

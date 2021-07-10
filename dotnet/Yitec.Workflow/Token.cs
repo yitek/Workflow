@@ -163,12 +163,19 @@ namespace Yitec.Workflow
                         }
                         else throw new DiagramException($"意外的\\t符号,row={lineAt},col={charAt}");
                     }
+                    else if (ch == '#') {
+                        if (lastToken == '\n')
+                        {
+                            lastToken = ch;
+                        }
+                        else throw new DiagramException($"意外的#符号,row={lineAt},col={charAt}");
+                    }
                     else if (ch == ':')
                     {
                         lastName = key;
                         key = sb.ToString().Trim();
                         if (currentArr != null) throw new DiagramException($"意外的:符号，当前正在定义数组，无法指定属性,row={lineAt},col={charAt}");
-                       
+
                         sb = new StringBuilder();
                         lastToken = ch;
                     }
@@ -202,19 +209,19 @@ namespace Yitec.Workflow
                                 currentMap = nextMap;
                                 currentArr = null;
                             }
-                           
+
                             lastName = null;
-                            
+
                         }
                         else if (deep == level) { }
                         else
                         {
-                            
+
                             for (var j = deep; j > level; j--)
                             {
                                 currentMap = stack.Pop();
                             }
-                            
+
                             if (currentMap == null)
                             {
                                 throw new DiagramException($"内部算法错误");

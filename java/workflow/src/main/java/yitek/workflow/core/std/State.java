@@ -15,12 +15,17 @@ public class State {
 		this._ownDiagram = ownDiagram;
 	}
 	private State(String name,StringMap data){
-		this(name,data,null);
+		this._name = name; 
+		this._data = data;
 	}
-	public static State createFlow(String name,Diagram subDiagram) throws Exception{
+	
+	public static State createFlow(String name,Diagram subDiagram,List<String> starts) throws Exception{
 		StringMap stateData = new StringMap();
-		stateData.put("name", name);
-		stateData.put("subDiagram", subDiagram.jsonObject());
+		stateData.put("@name", name);
+		
+		Map<String,Object> diagramData = subDiagram.jsonObject();
+		if (starts!=null )diagramData.put("@starts",JSON.toJSON(starts));
+		stateData.put("@subDiagram", diagramData);
 		State state = new State(name,stateData);
 		state._sub = subDiagram;
 		return state;
@@ -44,6 +49,23 @@ public class State {
 		}
 		return this._name;
 	}
+
+	private String _billStatus;
+	public String billStatus(){
+		if(_billStatus==null){
+			this._billStatus = this._data.getString("@billStatus",""); 
+		}
+		return this._billStatus;
+	}
+
+	private String _recallable;
+	public String recallable(){
+		if(_recallable==null){
+			this._recallable = this._data.getString("@recallable",""); 
+		}
+		return this._recallable;
+	}
+
 	private String _actionName;
 	public String actionName(){
 		if(_actionName==null){
@@ -192,7 +214,7 @@ public class State {
 	private Diagram _sub;
 	public Diagram subDiagram(){
 		if(this._sub==null){
-			Object value = _data.get("subDiagram");
+			Object value = _data.get("@subDiagram");
 			if(value instanceof JSONObject) {
 				this._sub =new Diagram(new StringMap(value),this);
 			}else if(value instanceof  String){
@@ -229,7 +251,11 @@ public class State {
 				if(entry.getValue() instanceof String){
 					vals = Arrays.asList(entry.getValue().toString().split(","));
 				}else if(entry.getValue() instanceof JSONArray){
-					vals = ((JSONArray)entry.getValue()).toJavaList(String.class);
+					vals = new ArrayList<String>();
+					for(Object obj : (JSONArray)entry.getValue()){
+						vals.add(obj.toString());
+					}
+					//vals = ((JSONArray)entry.getValue()).(String.class);
 				}
 				if(existed==null) {
 					map.put(entry.getKey(), vals);

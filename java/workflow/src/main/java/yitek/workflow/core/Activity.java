@@ -8,9 +8,9 @@ import yitek.workflow.core.std.*;
 
 public class Activity {
 	// Flow创建
-	public Activity(LocalSession session,Dealer dealer,String name,String version,Diagram diagram,Object inputs) throws Exception{
+	public Activity(LocalSession session,Dealer dealer,String name,String version,Diagram diagram,Object inputs,List<String> starts) throws Exception{
 		this._session = session;
-		this._state = State.createFlow(name, diagram);
+		this._state = State.createFlow(name, diagram,starts);
 		this._entity = new ActivityEntity(name,version,this._state.jsonObject(),dealer);
 		this._inputs = new StringMap(inputs);
 		this._entity.inputs(JSON.toJSONString(inputs));
@@ -28,12 +28,16 @@ public class Activity {
 		this._session = superActivity.session();
 		this._inputs = new StringMap(inputs);
 		this._entity.inputs(JSON.toJSONString(inputs));
+		this._entity.billStatus(subState.billStatus());
+		
 	}
 	public Activity(Dealer dealer,Transition transition,Activity fromActivity,Object inputs) throws Exception{
 		State state = transition.to();
 		this._entity = new ActivityEntity(transition.to().name(),state.jsonObject(),dealer,fromActivity._entity);
 		this._entity.actionName(transition.to().actionName());
 		this._state = state;
+		this._entity.transitionName(transition.name());
+		this._entity.billStatus(state.billStatus());
 		this.superActivity(fromActivity.superActivity());
 		this._session = fromActivity.session();
 		this._fromActivity = fromActivity;
@@ -54,6 +58,17 @@ public class Activity {
 	public UUID id(){
 		return this._entity._id;
 	}
+
+	public String name(){
+		return this._entity._name;
+	}
+	public String version(){
+		return this._entity.version();
+	}
+
+	public boolean isAuto(){
+		return this._entity.isAuto();
+	}
 	
 	ActivityEntity _entity;
 
@@ -63,7 +78,7 @@ public class Activity {
 		if(this._superActivity==null){
 			if(this._entity.superId()!=null){
 				if(this._entity.superId().equals(this._entity.id())) this.superActivity(this);
-				else this.superActivity(this._session.activity(this._entity.id()));
+				else this.superActivity(this._session.activity(this._entity.superId()));
 			}
 		}
 		return this._superActivity;
@@ -107,6 +122,9 @@ public class Activity {
 		return this._flow;
 	}
 
+	String _startStatus;
+	public void startStatus(String value){ this._startStatus = value;}
+
 	
 
 	List<Activity> _subsidiaries;
@@ -125,15 +143,35 @@ public class Activity {
 		return this._entity.billId();
 	}
 	public Activity billId(String value) throws Exception{
-		if(this.status()!= ActivityStates.created) throw new Exception("只能在entry阶段修改billId");
+		if(this.activityStatus()!= ActivityStates.created) throw new Exception("只能在entry阶段修改billId");
 		this._entity.billId(value);
 		return this;
 	}
+	Object _bill;
+	// 传递单据对象，不用每次都去数据库查
+	public Object bill(){
+		return _bill;
+	}
+	public Activity bill(Object value){
+		this._bill = value;
+		return this;
+	}
+
+	Object _task;
+	// 传递单据对象，不用每次都去数据库查
+	public Object task(){
+		return _task;
+	}
+	public Activity task(Object value){
+		this._task = value;
+		return this;
+	}
+
 	public String businessId(){
 		return this._entity.businessId();
 	}
 	public Activity businessId(String value) throws Exception{
-		if(this.status()!= ActivityStates.created) throw new Exception("businessId");
+		if(this.activityStatus()!= ActivityStates.created) throw new Exception("businessId");
 		this._entity.businessId(value);
 		return this;
 	}
@@ -141,7 +179,7 @@ public class Activity {
 		return this._entity.taskId();
 	}
 	public Activity taskId(String value) throws Exception{
-		if(this.status()!= ActivityStates.created) throw new Exception("taskId");
+		if(this.activityStatus()!= ActivityStates.created) throw new Exception("taskId");
 		this._entity.taskId(value);
 		return this;
 	}
@@ -154,10 +192,14 @@ public class Activity {
 		return this._entity.transitionName();
 	}
 
-	public ActivityStates status(){
-		return this._entity.status();
+	public String billStatus(){
+		return this._entity.billStatus();
 	}
-	private Activity status(ActivityStates value){this._entity.status(value);return this;}
+
+	public ActivityStates activityStatus(){
+		return this._entity.activityStatus();
+	}
+	private Activity status(ActivityStates value){this._entity.activityStatus(value);return this;}
 	
 	State _state;
 	public State state() throws Exception{
@@ -182,7 +224,7 @@ public class Activity {
 	public StringMap results(){
 		if(this._results==null && this._entity._results!=null){
 			this._results = new StringMap(JSON.parseObject(this._entity.results()));
-			if(this.status()!= ActivityStates.dealed){
+			if(this.activityStatus()!= ActivityStates.dealed){
 				this._results.readonly(true);
 			}
 		}
@@ -192,7 +234,7 @@ public class Activity {
 	public StringMap variables(){
 		if(this._variables==null){
 			this._variables = new StringMap(JSON.parseObject(this._entity.variables()));
-			if(this.status()!=ActivityStates.created) this._variables.readonly(true);
+			if(this.activityStatus()!=ActivityStates.created) this._variables.readonly(true);
 		}
 		return this._variables;
 	}
@@ -220,7 +262,7 @@ public class Activity {
 
 	// 进入阶段
 	Boolean entry(Dealer dealer,StringMap inputs) throws Exception{
-		if(this.status()!= ActivityStates.created) return false;
+		if(this.activityStatus()!= ActivityStates.created) return false;
 		this.setDealer(dealer);
 
 		StringMap variables;
@@ -279,7 +321,7 @@ public class Activity {
 			}
 		}
 		
-		this._entity.status(ActivityStates.entried);
+		this._entity.activityStatus(ActivityStates.entried);
 		this._entity.variables(JSON.toJSONString(this._variables));
 		this.session().activityRepository().entryActivity(_entity);		
 		return true;
@@ -289,7 +331,7 @@ public class Activity {
 	protected Boolean deal(Dealer dealer,StringMap rawParams) throws Exception{
 		
 		if(this.dealSubDiagram(dealer, rawParams)) return false;
-		if(this.status()!= ActivityStates.entried && this.status()!= ActivityStates.dealed) return false;
+		if(this.activityStatus()!= ActivityStates.entried && this.activityStatus()!= ActivityStates.dealed) return false;
 		StringMap params = rawParams;
 		this.setDealer(dealer);
 		Object results;
@@ -353,7 +395,7 @@ public class Activity {
 	}
 
 	Boolean dealSubDiagram(Dealer dealer,StringMap params) throws Exception{
-		if(this.status()!= ActivityStates.entried) return false;
+		if(this.activityStatus()!= ActivityStates.entried) return false;
 		Diagram subDiagram = this.state().subDiagram();
 		if(subDiagram==null || subDiagram==Diagram.empty()) return false;
 
@@ -367,7 +409,11 @@ public class Activity {
 			Activity subActivity = new Activity(startState,dealer,this,this._inputs);
 			subActivity._entity.startType(StartTypes.diagramStart);
 			subActivity.fromActivity(this.fromActivity());
+			subActivity._bill = this.bill();
+			subActivity._entity.billId(this.billId());
+			subActivity._entity.businessId(this.businessId());
 			this.session().activityRepository().createActivity(subActivity._entity);
+			
 			this.session().active(subActivity, dealer, this.inputs());
 		}
 		//this._entity._subCount = count;
@@ -390,7 +436,7 @@ public class Activity {
 			// 检查子节点是否全部完成
 			if(this.session().activityRepository().countLivedSubordinatesBySuperId(this.id())!=0) return null;
 			// 退出当前节点
-			if(!this.exit(dealer)) return null;
+			if(!this.exit(dealer,null)) return null;
 			// 上级节点做状态转换
 			return this.superActivity().transfer(dealer);
 		}
@@ -411,6 +457,8 @@ public class Activity {
 			if(transition.to()!=State.empty()){
 
 				Activity acti = new Activity(dealer,transition,this.superActivity(),nextInputs);
+				acti.billId(this.billId());
+				acti.bill(this.bill());
 				acti.fromActivity(this);
 				nextActivities.add(acti);
 				nextActEntities.add(acti._entity);
@@ -418,7 +466,7 @@ public class Activity {
 
 		}
 		// fromActivity退出阶段
-		if(!this.exit(dealer)){
+		if(!this.exit(dealer,nextActivities)){
 			//不允许退出
 			return null;
 		}
@@ -433,9 +481,9 @@ public class Activity {
 		return nextActivities;
 	}	
 
-	protected Boolean exit(Dealer dealer) throws Exception{
+	protected Boolean exit(Dealer dealer,List<Activity> nextActEntities) throws Exception{
 		if(this.action()!=null){
-			if(!this.action().exit(this,dealer, this.session())) return false;
+			if(!this.action().exit(this,dealer,nextActEntities, this.session())) return false;
 		}
 		this.setDealer(dealer);
 		this.status(ActivityStates.exited);
@@ -481,18 +529,62 @@ public class Activity {
 		return transactions;
 	}
 	static List<ActivityEntity> undoableActivities(ActivityEntity entity,Dealer dealer,Session session) throws Exception{
-		if(entity.status()!= ActivityStates.exited) return null;
+		if(entity.activityStatus()!= ActivityStates.exited) return null;
 		if(entity.dealerId()!=null){
 			if(dealer==null) return null;
 			if(!entity.dealerId().equals(dealer.id())) return null;
 		}
 		List<ActivityEntity> nexts = session.activityRepository().listNextActivities(entity.id());
-		boolean hasExits = nexts.stream().anyMatch(p->p.status()==ActivityStates.exited);
+		boolean hasExits = nexts.stream().anyMatch(p->p.activityStatus()==ActivityStates.exited);
 		if(hasExits) return null;
 		return nexts;
 	}
-	public Boolean recallable(Dealer dealer) throws Exception{
-		return undoableActivities(this._entity, dealer, this._session)!=null;
+
+	public String recallable(Dealer dealer) throws Exception{
+		if(!this._entity.dealerId().equals(dealer.id())) return null;
+		String recallUrl  = this.state().recallable();
+		if(recallUrl.equals("")) return null;
+		List<ActivityEntity> paddings = new ArrayList<>();
+		if(recallable(this._session,this._entity,paddings)){
+			return recallUrl;
+		}
+		return null;
+		
+	}
+
+	public boolean recall(Dealer dealer) throws Exception{
+		if(!this._entity.dealerId().equals(dealer.id())) return false;
+		if(this.state().recallable().equals("")) return false;
+		List<ActivityEntity> paddings = new ArrayList<>();
+		if(!recallable(this._session,this._entity,paddings)) return false;
+		for(ActivityEntity entity:paddings){
+			if(entity.actionName()!=null){
+				Action action = this._session.resolveAction(entity.actionName());
+				action.undo(new Activity(this._session,entity),dealer, _session);
+			}
+			this._session.activityRepository().removeActivityById(entity.id());
+		}
+		if(this.action()!=null)this.action().reenter(this,dealer, _session);
+		return true;
+	}
+
+	static boolean recallable(LocalSession session,ActivityEntity curr,List<ActivityEntity> paddings) throws Exception{
+		List<ActivityEntity> nexts = session.activityRepository().listNextActivities(curr.id());
+		for (ActivityEntity next:nexts) {
+			if(next.activityStatus()!= ActivityStates.exited){
+				paddings.add(next);
+			}else if(next.isAuto()){
+				paddings.add(next);
+				if(!recallable(session, next,paddings)){
+					return false;
+				}
+			}
+		}
+		if(paddings.size()!=nexts.size()){
+			return false;
+		}
+		return true;
+		//return undoableActivities(this._entity, dealer, this._session)!=null;
 	}
 
 	
@@ -517,12 +609,24 @@ public class Activity {
 	
 		Activity targetActivity=null;
 		String[] pathnames = varnames.split("\\.");
-		switch (scope) {
-			case "" -> targetActivity = this.flow();
-			case ".", "?" -> targetActivity = this;
-			case ".." -> targetActivity = this.superActivity();
-			case "~" -> targetActivity = this.fromActivity();
+		if(scope.equals("")){
+			targetActivity = this.flow();
 		}
+		if(scope.equals(".")||scope.equals("?")){
+			targetActivity = this;
+		}
+		if(scope.equals("..")){
+			targetActivity = this.superActivity();
+		}
+		if(scope.equals("~")){
+			targetActivity = this.fromActivity();
+		}
+//		switch (scope) {
+//			case "" -> targetActivity = this.flow();
+//			case ".", "?" -> targetActivity = this;
+//			case ".." -> targetActivity = this.superActivity();
+//			case "~" -> targetActivity = this.fromActivity();
+//		}
 		if(targetActivity==null) return null;
 		if(pathnames.length==0) {
 			if(varnames.charAt(0)=='@'){

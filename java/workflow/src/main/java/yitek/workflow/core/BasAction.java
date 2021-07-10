@@ -1,5 +1,7 @@
 package yitek.workflow.core;
 
+import java.util.List;
+
 import yitek.workflow.core.std.Transition;
 
 public class BasAction implements Action {
@@ -12,13 +14,14 @@ public class BasAction implements Action {
 	public Object transfer(Activity activity,Dealer dealer,Transition transition,FlowContext ctx)throws Exception{
 		return new Object();
 	}
-	public Boolean exit(Activity activity,Dealer dealer,FlowContext ctx) throws Exception{
+	public Boolean exit(Activity activity,Dealer dealer,List<Activity> nextActEntities,FlowContext ctx) throws Exception{
 		return true;
 	}
 
-	public void undo(Activity activity,FlowContext ctx) throws Exception{
+	public void undo(Activity activity,Dealer dealer,FlowContext ctx) throws Exception{
 
 	}
+	public void reenter(Activity activity,Dealer dealer,FlowContext ctx)throws Exception{}
 
 	private static Action _empty = new BasAction();
 	public static Action empty(){

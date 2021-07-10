@@ -2,6 +2,7 @@ package yitek.workflow.core.std;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.regex.Pattern;
 
 import com.alibaba.fastjson.*;
 
@@ -40,13 +41,15 @@ public class FileDiagramRepository implements DiagramRepository {
             reader = new BufferedReader(inputStreamReader);
             String tempString = null;
             while ((tempString = reader.readLine()) != null){
-                readJson += tempString;
+				if(Pattern.matches("^\\s*//", tempString))continue;
+                readJson += tempString + "\n";
             }
         } finally {
             if (reader != null){
                 reader.close();
             }
         }
+		System.out.println(readJson);
 		return new Diagram(new StringMap(readJson),null);
 	}	
 }

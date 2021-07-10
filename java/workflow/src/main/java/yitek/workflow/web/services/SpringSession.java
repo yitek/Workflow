@@ -1,6 +1,7 @@
 package yitek.workflow.web.services;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.function.Function;
 
 import org.springframework.beans.BeansException;
@@ -51,6 +52,10 @@ public class SpringSession extends LocalSession implements ApplicationContextAwa
         
 
         System.out.println("========ApplicationContext配置成功,在普通类可以通过调用SpringUtils.getAppContext()获取applicationContext对象,applicationContext="+_applicationContext+"========");
+        String[] names = applicationContext.getBeanDefinitionNames();
+        for(String name : names){
+            System.out.println(name);
+        }
 
     }
 

@@ -43,10 +43,10 @@ public class Diagram {
 		if(_exports==null){
 			Object value = _data.get("@exports");
 			Map<String,List<String>> existed = null;
-			if(this._superState!=null && this._superState.ownDiagram()!=null) existed = this._superState.ownDiagram().imports();
+			if(this._superState!=null && this._superState.ownDiagram()!=null) existed = this._superState.ownDiagram().exports();
 			this._exports = State.mergeImExport(existed, value);
 			this._exports = Collections.unmodifiableMap(this._exports);
-			if(this._imports.size()>0) this._data.put("@exports", this._imports);
+			if(this.imports().size()>0) this._data.put("@exports", this._imports);
 			else this._data.remove("@exports");
 		}
 		return _exports;
@@ -59,8 +59,8 @@ public class Diagram {
 	StringMap variables() throws Exception{
 		if(this._variables==null){
 			this._variables = new StringMap();
-			if(this._superState!=null && this._superState.variables()!=null){
-				Map<String,Object> superVars = this._superState.ownDiagram().jsonObject();
+			if(this._superState!=null && this._superState.ownDiagram()!=null && this._superState.ownDiagram().variables()!=null){
+				Map<String,Object> superVars = this._superState.ownDiagram().variables();
 				for(Map.Entry<String,Object> entry: superVars.entrySet()){
 					String key = entry.getKey();
 					if(key!=null && key.length()>0 && key.charAt(0)!='@' )
@@ -184,6 +184,15 @@ public class Diagram {
 	}
 	public State states(String name){
 		 return StringMap.resolve(this.states(), name);
+	}
+
+	public State findStateByBillStatus(String billStatus){
+		if(billStatus==null) return null;
+		for(Map.Entry<String,State> entry: this.states().entrySet()){
+			State state = entry.getValue();
+			if(state.billStatus().equals(billStatus)) return state;
+		}
+		return null;
 	}
 	
 	public StringMap jsonObject() throws Exception{

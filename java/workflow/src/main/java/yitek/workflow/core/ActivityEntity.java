@@ -90,11 +90,13 @@ public class ActivityEntity  {
 	public String actionName() {return this._actionName;}
 	public ActivityEntity actionName(String value){ this._actionName = value;return this;}
 
+	String _billStatus;
+	public String billStatus() {return this._billStatus;}
+	public ActivityEntity billStatus(String value){ this._billStatus = value;return this;}
 	
-
 	ActivityStates _status;
-	public ActivityStates status() {return this._status;}
-	public ActivityEntity status(ActivityStates value){ this._status = value;return this;}
+	public ActivityStates activityStatus() {return this._status;}
+	public ActivityEntity activityStatus(ActivityStates value){ this._status = value;return this;}
 
 	Date _createTime;
 	public Date createTime() {return this._createTime;}
@@ -124,7 +126,9 @@ public class ActivityEntity  {
 	public Date doneTime() {return this._doneTime;}
 	public ActivityEntity doneTime(Date value){ this._dealTime = value;return this;}
 
-
+	boolean _isAuto;
+	public boolean isAuto() {return this._isAuto;}
+	public ActivityEntity isAuto(boolean value){ this._isAuto = value;return this;}
 
 	String _state;
 	public String state() {return this._state;}

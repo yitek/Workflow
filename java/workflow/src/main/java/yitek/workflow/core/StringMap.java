@@ -57,7 +57,7 @@ public class StringMap implements Map<String,Object> {
 
 	public String getString(String key,String dft){
 		String value = this.getString(key);
-		return (value==null)?dft:key;
+		return (value==null)?dft:value;
 	}
 
 	public Set<Map.Entry<String,Object>> entrySet(){
